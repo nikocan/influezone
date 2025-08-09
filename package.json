@@ -1,0 +1,14 @@
+{
+  "name": "influezone",
+  "version": "1.0.0",
+  "description": "Skeleton server for InflueZone and BenimDükkanım",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
