@@ -1,0 +1,61 @@
+:root[data-theme='dark']{
+  --bg:#0F0F1A; --surface-1:#1A1B2E; --surface-2:#242647; --surface-3:#2C2F5A;
+  --border:#2B2C3F; --text-primary:#E5E7EB; --text-secondary:#9CA3AF; --text-muted:#6B7280;
+  --text-bright:#FFFFFF; --bg-panel:#121327; --bg-card:#1A1B2E; --bg-hover:#242647;
+  --divider:#23253A; --input-bg:#121327;
+
+  --brand-500:#8A4FFF; --brand-600:#7A3BFF; --brand-700:#6B2BFF; --brand-subtle:#B497FF;
+  --accent-coral:#FF6B6B; --accent-coral-hover:#FF5A5A; --accent-coral-subtle:#FFC0C0;
+  --accent-amber:#FF9E00; --accent-amber-hover:#FF8C00; --accent-amber-subtle:#FFD28A;
+
+  --info:#3BAFDA; --success:#34D399; --warning:#FACC15; --danger:#EF4444; --danger-hover:#DC2626;
+
+  --radius-xl:16px; --radius-2xl:24px;
+  --shadow-glow:0 0 24px rgba(138,79,255,.18);
+  --shadow-glow-lg:0 0 32px rgba(138,79,255,.25);
+  --shadow-ring:0 0 0 4px rgba(138,79,255,.22);
+  --shadow-login-card:0 0 24px rgba(138,79,255,0.3), 0 0 48px rgba(138,79,255,0.1);
+
+  --chart-1:#8A4FFF; --chart-2:#3BAFDA; --chart-3:#FF9E00; --chart-4:#FF6B6B; --chart-5:#34D399; --chart-6:#FACC15;
+
+  --hero-gradient:radial-gradient(80% 80% at 70% 20%, rgba(138,79,255,0.35) 0%, rgba(59,175,218,0.25) 45%, rgba(15,15,26,0) 70%);
+  --hero-bg-gradient:linear-gradient(135deg, #0F0F1A 0%, #1A1B2E 100%);
+  --brand-gradient:linear-gradient(135deg, #8A4FFF 0%, #7A3BFF 100%);
+  --title-gradient:linear-gradient(135deg, #8A4FFF 0%, #3BAFDA 100%);
+  --accent-gradient:linear-gradient(135deg, #FF6B6B 0%, #FF9E00 100%);
+}
+
+:root[data-theme='light']{
+  --bg:#FFFFFF; --surface-1:#F8FAFC; --surface-2:#EEF2FF; --surface-3:#E2E8F0;
+  --border:#E2E8F0; --text-primary:#334155; --text-secondary:#475569; --text-muted:#64748B;
+  --text-bright:#0F172A; --bg-panel:#F8FAFC; --bg-card:#FFFFFF; --bg-hover:#EEF2FF;
+  --divider:#E2E8F0; --input-bg:#FFFFFF;
+
+  --brand-500:#8A4FFF; --brand-600:#9B66FF; --brand-700:#7A3BFF; --brand-subtle:#C9B0FF;
+  --accent-coral:#FF6B6B; --accent-coral-hover:#FF5A5A; --accent-coral-subtle:#FFC0C0;
+  --accent-amber:#FF9E00; --accent-amber-hover:#FF8C00; --accent-amber-subtle:#FFD28A;
+
+  --info:#3BAFDA; --success:#34D399; --warning:#FACC15; --danger:#EF4444; --danger-hover:#DC2626;
+
+  --radius-xl:16px; --radius-2xl:24px;
+  --shadow-glow:0 0 24px rgba(138,79,255,.18);
+  --shadow-glow-lg:0 0 32px rgba(138,79,255,.25);
+  --shadow-ring:0 0 0 4px rgba(138,79,255,.22);
+
+  --chart-1:#8A4FFF; --chart-2:#3BAFDA; --chart-3:#FF9E00; --chart-4:#FF6B6B; --chart-5:#34D399; --chart-6:#FACC15;
+
+  --hero-gradient:radial-gradient(80% 80% at 70% 20%, rgba(138,79,255,0.35) 0%, rgba(255,107,107,0.22) 45%, rgba(255,255,255,0) 70%);
+  --brand-gradient:linear-gradient(135deg, #8A4FFF 0%, #7A3BFF 100%);
+  --accent-gradient:linear-gradient(135deg, #FF6B6B 0%, #FF9E00 100%);
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+html, body { 
+  background: var(--bg); 
+  color: var(--text-primary); 
+  transition: background-color 0.3s ease, color 0.3s ease;
+}

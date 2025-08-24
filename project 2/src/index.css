@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import './styles/theme.css';
+
+@layer utilities {
+  .text-bright {
+    color: var(--text-bright);
+  }
+  
+  .text-primary {
+    color: var(--text-primary);
+  }
+  
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  
+  .text-muted {
+    color: var(--text-muted);
+  }
+  
+  .scale-102 {
+    transform: scale(1.02);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-500 text-bg hover:bg-brand-600 active:bg-brand-700 disabled:opacity-50 disabled:bg-surface-3;
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .btn-primary:hover {
+    box-shadow: var(--shadow-glow-lg);
+  }
+  
+  .btn-secondary {
+    @apply border border-brand-500 text-text-primary hover:bg-surface-2 bg-transparent;
+  }
+  
+  .btn-danger {
+    @apply bg-danger hover:bg-danger-hover text-white;
+  }
+  
+  .card {
+    @apply bg-card border border-border rounded-xl shadow-glow;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-glow-lg hover:border-brand-subtle/30;
+  }
+  
+  .input-field {
+    @apply bg-input-bg border border-border text-text-primary placeholder-text-muted rounded-xl;
+  }
+  
+  .input-field:focus {
+    @apply outline-none;
+    box-shadow: var(--shadow-ring);
+  }
+  
+  .badge-info {
+    @apply bg-info text-bg px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .badge-success {
+    @apply bg-success text-bg px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .badge-warning {
+    @apply bg-warning text-bg px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .badge-danger {
+    @apply bg-danger text-white px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .link {
+    @apply text-brand-subtle hover:text-brand-500 hover:underline transition-colors;
+  }
+
+  .menu-item-active {
+    background: linear-gradient(90deg, rgba(138,79,255,0.13) 0%, rgba(138,79,255,0.27) 100%);
+    @apply text-bright font-semibold;
+  }
+  
+  .message-text {
+    @apply text-primary;
+  }
+  
+  .message-meta {
+    @apply text-secondary text-xs;
+  }
+  
+  .channel-title {
+    @apply text-bright font-semibold;
+  }
+  
+  .mention, .link {
+    @apply text-brand-500 hover:text-brand-600 hover:underline;
+  }
+  
+  .avatar-glow {
+    box-shadow: 0 0 0 2px rgba(138,79,255,0.3);
+  }
+  
+  .emoji-hover {
+    @apply transition-transform duration-200 hover:scale-110;
+  }
+}
