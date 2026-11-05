@@ -1,4 +1,4 @@
-import { useState, type ImgHTMLAttributes } from 'react';
+import { useEffect, useState, type ImgHTMLAttributes } from 'react';
 import { ImageOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +12,8 @@ function hue(s: string) {
 export function SmartImage({ src, alt, className, fallbackLabel, ...p }: ImgHTMLAttributes<HTMLImageElement> & { fallbackLabel?: string }) {
   const [failed, setFailed] = useState(!src);
   const [loaded, setLoaded] = useState(false);
+  // a src that arrives after first render (async data) must get a fresh attempt
+  useEffect(() => { setFailed(!src); setLoaded(false); }, [src]);
   if (failed) {
     const h = hue(String(src ?? alt ?? ''));
     return (

@@ -2,6 +2,14 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Repository } from '../repository';
 import type {
+  AffiliateLink,
+  ClickStat,
+  Conversion,
+  ConversionStatus,
+  CurrencyEarnings,
+  EarningsSummary,
+  Payout,
+  PayoutAccount,
   AppNotification,
   Collection,
   Comment,
@@ -27,11 +35,17 @@ import type {
 import { AppError } from '../errors';
 import { rankFeed } from '@/lib/ranking';
 import { getSupabase } from '@/lib/supabase';
+import { splitCommission, round2 } from '@/lib/ledger';
 
 type Row = Record<string, any>;
 
 function fail(e: PostgrestError | null): void {
   if (!e) return;
+  for (const code of ['payout_account_not_verified', 'payout_already_open', 'insufficient_available_balance', 'payout_execution_disabled'] as const) {
+    if (e.message.includes(code)) {
+      throw new AppError(code === 'payout_account_not_verified' ? 'payout_not_eligible' : code === 'payout_already_open' ? 'payout_open' : code === 'insufficient_available_balance' ? 'insufficient_funds' : 'payout_execution_disabled');
+    }
+  }
   if (e.code === '42501') throw new AppError('forbidden', e.message);
   if (e.code === 'P0429' || /rate_limited/.test(e.message)) throw new AppError('rate_limited');
   if (e.code === '23505') throw new AppError('validation', e.message);
@@ -548,6 +562,116 @@ export class SupabaseRepository implements Repository {
       posts: (posts.data ?? []).map((r) => this.post(r)),
       hashtags: tags.filter((t) => !s || t.tag.includes(s.toLowerCase())),
     };
+  }
+
+  // ---------- Monetisation ----------
+  private link(r: Row): AffiliateLink {
+    return { id: r.id, creatorId: r.creator_id, offerId: r.offer_id, code: r.code, createdAt: r.created_at, trackingActive: Boolean(r.program_id) };
+  }
+  async listAffiliateLinks() {
+    const { data, error } = await this.sb.from('affiliate_links').select('*').eq('creator_id', this.me()).order('created_at', { ascending: false });
+    fail(error);
+    return (data ?? []).map((r) => this.link(r));
+  }
+  async createAffiliateLink(offerId: string) {
+    const me = this.me();
+    const existing = await this.sb.from('affiliate_links').select('*').eq('creator_id', me).eq('offer_id', offerId).maybeSingle();
+    if (existing.data) return this.link(existing.data);
+    const { data: offer } = await this.sb.from('product_offers').select('affiliate_program_id').eq('id', offerId).maybeSingle();
+    const { data, error } = await this.sb.from('affiliate_links').insert({ creator_id: me, offer_id: offerId, program_id: offer?.affiliate_program_id ?? null }).select('*').single();
+    fail(error);
+    return this.link(data!);
+  }
+  private conversion(r: Row): Conversion {
+    const share = r.creator_share_bps as number | null;
+    return {
+      id: r.id, networkName: r.affiliate_networks?.name ?? '', providerEventId: r.provider_event_id, creatorId: r.creator_id, offerId: r.offer_id, productId: r.product_offers?.product_id ?? null,
+      orderAmount: Number(r.order_amount), commissionAmount: Number(r.commission_amount), currency: r.currency, status: r.status, rejectReason: r.reject_reason,
+      creatorShareBps: share, creatorAmount: share === null ? null : splitCommission(Number(r.commission_amount) - Number(r.reversed_amount), share).creator,
+      reversedAmount: Number(r.reversed_amount), occurredAt: r.occurred_at, confirmedAt: r.confirmed_at, holdUntil: r.hold_until, isSample: false,
+    };
+  }
+  async listConversions(status: ConversionStatus | 'all' = 'all') {
+    let q = this.sb.from('conversion_events').select('*, affiliate_networks(name), product_offers(product_id)').eq('creator_id', this.me()).order('occurred_at', { ascending: false }).limit(500);
+    if (status !== 'all') q = q.eq('status', status);
+    const { data, error } = await q;
+    fail(error);
+    return (data ?? []).map((r) => this.conversion(r));
+  }
+  async getPayoutAccount(): Promise<PayoutAccount> {
+    const me = this.me();
+    const { data, error } = await this.sb.from('payout_accounts').select('*').eq('creator_id', me).maybeSingle();
+    fail(error);
+    return data
+      ? { creatorId: me, provider: data.provider, status: data.status, kycStatus: data.kyc_status, taxFormStatus: data.tax_form_status, payoutCurrency: data.payout_currency }
+      : { creatorId: me, provider: 'unconfigured', status: 'not_started', kycStatus: 'not_started', taxFormStatus: 'not_started', payoutCurrency: null };
+  }
+  async getEarningsSummary(): Promise<EarningsSummary> {
+    const me = this.me();
+    const [bal, convs, clicks, acct] = await Promise.all([
+      this.sb.from('creator_balances').select('*').eq('creator_id', me),
+      this.listConversions('all'),
+      this.sb.from('click_events').select('id', { count: 'exact', head: true }).eq('creator_id', me),
+      this.getPayoutAccount(),
+    ]);
+    fail(bal.error);
+    const eligible = acct.status === 'verified' && acct.kycStatus === 'verified' && acct.taxFormStatus === 'accepted';
+    const byCur = new Map<string, CurrencyEarnings>();
+    const get = (c: string) => byCur.get(c) ?? byCur.set(c, { currency: c, estimated: 0, pending: 0, approved: 0, inPayout: 0, paid: 0, reversed: 0, available: 0 }).get(c)!;
+    for (const r of bal.data ?? []) {
+      const e = get(r.currency);
+      const amt = Number(r.amount);
+      if (r.bucket === 'pending') e.pending = amt;
+      if (r.bucket === 'approved') e.approved = amt;
+      if (r.bucket === 'in_payout') e.inPayout = amt;
+      if (r.bucket === 'paid') e.paid = amt;
+    }
+    for (const c of convs) {
+      const e = get(c.currency);
+      if (c.status === 'reported') e.estimated = round2(e.estimated + splitCommission(c.commissionAmount, 7000).creator); // default share; labelled as estimate
+      if (c.reversedAmount > 0 && c.creatorShareBps !== null) e.reversed = round2(e.reversed + splitCommission(c.reversedAmount, c.creatorShareBps).creator);
+    }
+    for (const e of byCur.values()) e.available = eligible ? Math.max(0, e.approved) : 0;
+    return {
+      byCurrency: [...byCur.values()].sort((a, b) => a.currency.localeCompare(b.currency)),
+      clicks: clicks.count ?? 0,
+      reportedConversions: convs.filter((c) => c.status === 'reported').length,
+      confirmedConversions: convs.filter((c) => c.status === 'confirmed' || c.status === 'approved').length,
+      payoutEligible: eligible,
+    };
+  }
+  async getClickStats(): Promise<ClickStat[]> {
+    const me = this.me();
+    const [{ data: clicks, error }, convs] = await Promise.all([
+      this.sb.from('click_events').select('offer_id, product_offers(product_id)').eq('creator_id', me).limit(5000),
+      this.listConversions('all'),
+    ]);
+    fail(error);
+    const map = new Map<string, ClickStat>();
+    const get = (pid: string) => map.get(pid) ?? map.set(pid, { productId: pid, postId: null, clicks: 0, confirmedConversions: 0, creatorEarned: [] }).get(pid)!;
+    for (const c of (clicks ?? []) as Row[]) if (c.product_offers?.product_id) get(c.product_offers.product_id).clicks++;
+    for (const c of convs) {
+      if (!c.productId || (c.status !== 'confirmed' && c.status !== 'approved')) continue;
+      const s = get(c.productId);
+      s.confirmedConversions++;
+      const cur = s.creatorEarned.find((x) => x.currency === c.currency);
+      if (cur) cur.amount = round2(cur.amount + (c.creatorAmount ?? 0));
+      else s.creatorEarned.push({ currency: c.currency, amount: c.creatorAmount ?? 0 });
+    }
+    return [...map.values()].sort((a, b) => b.clicks - a.clicks);
+  }
+  async listPayouts(): Promise<Payout[]> {
+    const { data, error } = await this.sb.from('payouts').select('*, payout_events(*)').eq('creator_id', this.me()).order('requested_at', { ascending: false });
+    fail(error);
+    return (data ?? []).map((r: Row) => ({
+      id: r.id, creatorId: r.creator_id, currency: r.currency, amount: Number(r.amount), status: r.status, requestedAt: r.requested_at,
+      events: (r.payout_events ?? []).map((e: Row) => ({ status: e.status, note: e.note, at: e.created_at })).sort((a: { at: string }, b: { at: string }) => a.at.localeCompare(b.at)),
+    }));
+  }
+  async requestPayout(currency: string, amount: number) {
+    const { data, error } = await this.sb.rpc('request_payout', { _creator: this.me(), _currency: currency, _amount: amount });
+    fail(error);
+    return (await this.listPayouts()).find((p) => p.id === data)!;
   }
 
   // ---------- Safety ----------

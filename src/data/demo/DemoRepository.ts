@@ -24,6 +24,8 @@ import { getDB, mutate, type DemoConversation, type DemoDB } from './store';
 import { extractHashtags, extractMentions, uid } from '@/lib/utils';
 import { rankFeed } from '@/lib/ranking';
 import { AppError } from '../errors';
+import * as M from './monetization';
+import type { AffiliateLink, ConversionStatus } from '../types';
 
 const nowIso = () => new Date().toISOString();
 const latency = <T>(v: T, ms = 120): Promise<T> => new Promise((r) => setTimeout(() => r(structuredClone(v)), ms));
@@ -689,6 +691,66 @@ export class DemoRepository implements Repository {
       posts,
       hashtags: [...tagCounts.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count),
     };
+    return this.delay(res);
+  }
+
+  // ---------- Monetisation ----------
+  async listAffiliateLinks() {
+    const me = this.me();
+    return this.delay(getDB().affiliateLinks.filter((l) => l.creatorId === me).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  }
+  async createAffiliateLink(offerId: string) {
+    const me = this.me();
+    const l = mutate((d) => {
+      if (!d.offers.some((o) => o.id === offerId)) throw new AppError('not_found');
+      const existing = d.affiliateLinks.find((x) => x.creatorId === me && x.offerId === offerId);
+      if (existing) return existing;
+      const link: AffiliateLink = { id: uid('al'), creatorId: me, offerId, code: `SF${Math.random().toString(36).slice(2, 8).toUpperCase()}`, createdAt: nowIso(), trackingActive: false };
+      d.affiliateLinks.push(link);
+      return link;
+    });
+    return this.delay(l);
+  }
+  async getEarningsSummary() {
+    const me = this.me();
+    mutate((d) => M.releaseDue(d));
+    return this.delay(M.earningsSummary(getDB(), me));
+  }
+  async listConversions(status: ConversionStatus | 'all' = 'all') {
+    const me = this.me();
+    const d = getDB();
+    return this.delay(d.conversions.filter((c) => c.creatorId === me && (status === 'all' || c.status === status)).sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)).map((c) => M.toConversion(d, c)));
+  }
+  async getClickStats() {
+    return this.delay(M.clickStats(getDB(), this.me()));
+  }
+  async getPayoutAccount() {
+    return this.delay(M.payoutAccountOf(getDB(), this.me()));
+  }
+  async listPayouts() {
+    const me = this.me();
+    return this.delay(getDB().payouts.filter((p) => p.creatorId === me).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt)));
+  }
+  async requestPayout(currency: string, amount: number) {
+    const me = this.me();
+    return this.delay(mutate((d) => M.requestPayout(d, me, currency, amount)));
+  }
+  async importSampleConversionReport() {
+    const me = this.me();
+    const res = mutate((d) => {
+      const prof = d.profiles.find((p) => p.id === me);
+      if (!prof?.isCreator) throw new AppError('forbidden');
+      const out = { imported: 0, duplicates: 0, rejected: 0, updated: 0, released: 0 };
+      for (const row of M.sampleReport(d, me)) {
+        const r = M.ingest(d, row);
+        if (r === 'imported') out.imported++;
+        else if (r === 'duplicate') out.duplicates++;
+        else if (r === 'rejected') out.rejected++;
+        else out.updated++;
+      }
+      out.released = M.releaseDue(d);
+      return out;
+    });
     return this.delay(res);
   }
 

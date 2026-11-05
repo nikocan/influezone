@@ -4,7 +4,7 @@ import { Eye, Heart, MessageCircle, Bookmark, Send, PlusSquare, FilePen, Calenda
 import { useI18n } from '@/i18n/I18nProvider';
 import { useAuth, useRepo } from '@/providers/AuthProvider';
 import { qk, useErrorToast } from '@/data/hooks';
-import { Card, Badge, Switch } from '@/components/ui/misc';
+import { Card, Switch } from '@/components/ui/misc';
 import { Button } from '@/components/ui/button';
 import { EmptyState, ListSkeleton } from '@/components/common/States';
 import { PostGridTile } from '@/components/social/PostCard';
@@ -57,8 +57,9 @@ export function StudioDashboard() {
         )}
       </section>
       <Card className="p-4">
-        <div className="flex items-center gap-2"><Wallet className="h-5 w-5 text-gold" /><h2 className="font-semibold">{t('studio.earningsTitle')}</h2><Badge tone="warning">{t('status.phase', { n: 4 })}</Badge></div>
+        <div className="flex items-center gap-2"><Wallet className="h-5 w-5 text-gold" /><h2 className="font-semibold">{t('studio.earningsTitle')}</h2></div>
         <p className="mt-2 text-sm text-muted">{t('studio.earningsNotYet')}</p>
+        <Button asChild variant="secondary" size="sm" className="mt-3"><Link to="/studio/earnings">{t('earnings.open')}</Link></Button>
       </Card>
       <section>
         <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t('studio.recent')}</h2><Link to="/studio/content" className="text-sm font-semibold text-primary">{t('common.seeAll')}</Link></div>

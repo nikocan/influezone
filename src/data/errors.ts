@@ -13,6 +13,10 @@ export type AppErrorCode =
   | 'weak_password'
   | 'not_configured'
   | 'network'
+  | 'payout_not_eligible'
+  | 'payout_open'
+  | 'insufficient_funds'
+  | 'payout_execution_disabled'
   | 'unknown';
 
 export class AppError extends Error {

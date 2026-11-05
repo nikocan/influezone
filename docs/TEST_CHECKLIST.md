@@ -11,16 +11,16 @@ Komutlar: `npm test` (Vitest) · `npm run db:test` (PostgreSQL + RLS) · `node e
 | Pazaryeri filtreleme | `commerce.test.ts` (ülke, para birimi, adil en iyi fiyat) + entegrasyon testi | ✅ |
 | Yetkili affiliate yönlendirme | RLS: `outbound_redirect` yalnız onaylı ürün + yetkili URL; UI: yapılandırılmamışsa yönlendirme yok | ✅ (gerçek link yok) |
 | Tıklama olayı oluşturma | RLS + demo testi; kendi tıklaması işaretlenir/atfedilmez | ✅ |
-| Çift dönüşüm engelleme | — | ⏳ Faz 4 |
-| İade ve komisyon ters kaydı | — | ⏳ Faz 4 |
-| Komisyon dağıtımı | — | ⏳ Faz 4 |
-| Ödeme onay yetkisi | — | ⏳ Faz 4 |
+| Çift dönüşüm engelleme | SQL: aynı provider_event_id tek kayıt, onay tek kez; demo: tekrar içe aktarma 7 tekrar | ✅ |
+| İade ve komisyon ters kaydı | SQL + demo: kısmi/tam iade, beklemede/onaylı kovadan düşüm, aşırı iade engeli | ✅ |
+| Komisyon dağıtımı | SQL + birim: %70/%30 varsayılan, en özel kural, kuruş yuvarlama eşitliği, defter dengesi | ✅ |
+| Ödeme onay yetkisi | SQL: doğrulanmamış hesap engeli, bakiye üstü engeli, kendi ödemesini onaylayamama, bayrak kapalıyken gönderim engeli | ✅ |
 | Marka organizasyon izolasyonu | RLS: üyelik, rol yükseltme, marka adına paylaşım | ✅ |
 | Admin yetkilendirme | RLS: kendine rol verememe, `admin_set_role`; e2e: /admin engeli | ✅ |
-| RLS politika uygulaması | `supabase/tests/10_rls_tests.sql` — 46 kontrol | ✅ |
+| RLS politika uygulaması | `supabase/tests/10_rls_tests.sql` (46) + `20_ledger_tests.sql` (30) | ✅ |
 | Yerelleştirme ve para birimi | `format.test.ts` (TR/EN anahtar eşitliği, biçimler, RTL yedekleme) + e2e dil değişimi | ✅ |
 | Mobil/tablet/masaüstü | e2e 390px + 1280px ekran görüntüleri | ✅ (tablet manuel) |
 | Yükleniyor ve ağ hataları | Tüm sorgularda skeleton/ErrorState + yeniden dene | 🟡 manuel |
 | Video oynatma ve erişilebilirlik | Görünürlükte oynat/duraklat, sessiz, altyazı, azaltılmış hareket | 🟡 manuel (sandbox video ağı kapalı) |
 
-Son çalıştırma (2026-10-31): Vitest 52/52 ✅ · RLS 46/46 ✅ · E2E 19/19 ✅ · `tsc` ✅ · `vite build` ✅
+Son çalıştırma (2026-11-05): Vitest 62/62 ✅ · SQL 76/76 ✅ · E2E 23/23 ✅ · `tsc` ✅ · `vite build` ✅

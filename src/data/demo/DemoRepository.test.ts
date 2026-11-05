@@ -92,7 +92,8 @@ describe('DemoRepository rules', () => {
     const r = await repo.recordOutboundClick('of_w1', 'po_1', 'p_elif');
     expect(r.destination).toBeNull();
     expect(getDB().clicks).toHaveLength(1);
-    expect(getDB()).not.toHaveProperty('conversions');
+    expect(getDB().conversions).toHaveLength(0);
+    expect(getDB().ledger).toHaveLength(0);
   });
 
   it('self-clicks are not attributed to the creator', async () => {

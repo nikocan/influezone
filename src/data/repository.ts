@@ -1,4 +1,11 @@
 import type {
+  AffiliateLink,
+  ClickStat,
+  Conversion,
+  ConversionStatus,
+  EarningsSummary,
+  Payout,
+  PayoutAccount,
   AppNotification,
   ClickEvent,
   Collection,
@@ -116,6 +123,18 @@ export interface Repository {
 
   // Search
   search(q: string, filters: SearchFilters): Promise<SearchResults>;
+
+  // Monetisation (creator). Money only moves server-side; these are reads + requests.
+  listAffiliateLinks(): Promise<AffiliateLink[]>;
+  createAffiliateLink(offerId: string): Promise<AffiliateLink>;
+  getEarningsSummary(): Promise<EarningsSummary>;
+  listConversions(status?: ConversionStatus | 'all'): Promise<Conversion[]>;
+  getClickStats(): Promise<ClickStat[]>;
+  getPayoutAccount(): Promise<PayoutAccount>;
+  listPayouts(): Promise<Payout[]>;
+  requestPayout(currency: string, amount: number): Promise<Payout>;
+  /** DEMO ONLY: imports a clearly labelled sample network report (idempotent). */
+  importSampleConversionReport?(): Promise<{ imported: number; duplicates: number; rejected: number; updated: number; released: number }>;
 
   // Safety
   report(targetType: ReportTarget, targetId: string, reason: ReportReason, details: string): Promise<ModerationReport>;

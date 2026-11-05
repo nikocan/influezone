@@ -224,7 +224,7 @@ export function AboutPage() {
           </Card>
         )}
         <Card className="p-4 text-sm">
-          <p className="font-semibold">Shopfluence 0.2.0</p>
+          <p className="font-semibold">Shopfluence 0.3.0</p>
           <p className="text-muted">Where Influence Becomes Income</p>
           <Link to="/updates" className="mt-2 inline-block font-semibold text-primary">{t('nav.updates')}</Link>
         </Card>

@@ -269,3 +269,91 @@ export interface ProductProposal {
   category: string;
   note: string;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 4 — monetisation
+// ---------------------------------------------------------------------------
+export type ConversionStatus = 'reported' | 'confirmed' | 'approved' | 'reversed' | 'rejected';
+export type LedgerBucket = 'pending' | 'approved' | 'in_payout' | 'paid' | 'none';
+
+export interface AffiliateLink {
+  id: string;
+  creatorId: string;
+  offerId: string;
+  code: string;
+  createdAt: string;
+  /** false until an authorised affiliate programme is attached to the offer */
+  trackingActive: boolean;
+}
+
+export interface Conversion {
+  id: string;
+  networkName: string;
+  providerEventId: string;
+  creatorId: string | null;
+  offerId: string | null;
+  productId: string | null;
+  orderAmount: number;
+  commissionAmount: number;
+  currency: string;
+  status: ConversionStatus;
+  rejectReason: string | null;
+  creatorShareBps: number | null;
+  /** creator's share of the (non-reversed) commission, null while only reported */
+  creatorAmount: number | null;
+  reversedAmount: number;
+  occurredAt: string;
+  confirmedAt: string | null;
+  holdUntil: string | null;
+  isSample: boolean;
+}
+
+export interface CurrencyEarnings {
+  currency: string;
+  /** reported by the network but NOT confirmed: an estimate, never money */
+  estimated: number;
+  pending: number;
+  approved: number;
+  inPayout: number;
+  paid: number;
+  reversed: number;
+  /** approved funds that can be requested (requires a verified payout account) */
+  available: number;
+}
+
+export interface EarningsSummary {
+  byCurrency: CurrencyEarnings[];
+  clicks: number;
+  reportedConversions: number;
+  confirmedConversions: number;
+  payoutEligible: boolean;
+}
+
+export interface PayoutAccount {
+  creatorId: string;
+  provider: string;
+  status: 'not_started' | 'pending_verification' | 'verified' | 'rejected' | 'disabled';
+  kycStatus: 'not_started' | 'pending' | 'verified' | 'failed';
+  taxFormStatus: 'not_started' | 'submitted' | 'accepted' | 'rejected';
+  payoutCurrency: string | null;
+}
+
+export type PayoutStatus = 'requested' | 'approved' | 'rejected' | 'processing' | 'paid' | 'failed' | 'cancelled';
+
+export interface Payout {
+  id: string;
+  creatorId: string;
+  currency: string;
+  amount: number;
+  status: PayoutStatus;
+  requestedAt: string;
+  events: { status: string; note: string; at: string }[];
+}
+
+export interface ClickStat {
+  productId: string;
+  postId: string | null;
+  clicks: number;
+  confirmedConversions: number;
+  creatorEarned: { currency: string; amount: number }[];
+}

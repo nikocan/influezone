@@ -13,6 +13,8 @@ import type {
   Product,
   Profile,
 } from '../types';
+import type { AffiliateLink, PayoutAccount, Payout, ConversionStatus } from '../types';
+import type { LedgerEntry, RuleLike } from '@/lib/ledger';
 import { seedComments, seedMarketplaces, seedOffers, seedPosts, seedProducts, seedProfiles, SAMPLE_FOLLOWS } from './seed';
 
 export interface DemoAccount {
@@ -27,6 +29,31 @@ export interface DemoAccount {
 export interface DemoConversation extends Omit<Conversation, 'unreadCount'> {
   lastReadAt: Record<string, string>;
   initiatorId: string;
+}
+
+export interface DemoConversion {
+  id: string;
+  networkId: string;
+  networkName: string;
+  providerEventId: string;
+  linkId: string | null;
+  clickId: string | null;
+  creatorId: string | null;
+  offerId: string | null;
+  country: string | null;
+  orderAmount: number;
+  commissionAmount: number;
+  currency: string;
+  status: ConversionStatus;
+  rejectReason: string | null;
+  isSelfPurchase: boolean;
+  ruleId: string | null;
+  creatorShareBps: number | null;
+  occurredAt: string;
+  confirmedAt: string | null;
+  holdUntil: string | null;
+  reversedAmount: number;
+  isSample: boolean;
 }
 
 export interface DemoDB {
@@ -50,10 +77,28 @@ export interface DemoDB {
   /** catalog snapshot — regenerated on every load so freshness is relative to "now" */
   offers: Offer[];
   marketplaces: Marketplace[];
+  // Phase 4
+  affiliateLinks: AffiliateLink[];
+  conversions: DemoConversion[];
+  ledger: LedgerEntry[];
+  rules: RuleLike[];
+  payoutAccounts: PayoutAccount[];
+  payouts: Payout[];
+}
+
+const DEFAULT_RULES: RuleLike[] = [{ id: 'rule_default', creatorShareBps: 7000, holdDays: 30, validFrom: '2020-01-01T00:00:00.000Z' }];
+
+function addPhase4(d: Partial<DemoDB>) {
+  d.affiliateLinks ??= [];
+  d.conversions ??= [];
+  d.ledger ??= [];
+  d.rules ??= DEFAULT_RULES;
+  d.payoutAccounts ??= [];
+  d.payouts ??= [];
 }
 
 const KEY = 'sf.demo.db';
-const VERSION = 3;
+const VERSION = 4;
 
 function fresh(): DemoDB {
   const now = Date.now();
@@ -77,6 +122,12 @@ function fresh(): DemoDB {
     products: seedProducts(),
     offers: seedOffers(now),
     marketplaces: seedMarketplaces(),
+    affiliateLinks: [],
+    conversions: [],
+    ledger: [],
+    rules: DEFAULT_RULES,
+    payoutAccounts: [],
+    payouts: [],
   };
 }
 
@@ -97,6 +148,11 @@ export function getDB(): DemoDB {
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as DemoDB;
+      if (parsed.version === 3) {
+        // forward migration: keep the user's demo accounts and posts
+        addPhase4(parsed);
+        parsed.version = VERSION;
+      }
       if (parsed.version === VERSION) {
         parsed.offers = seedOffers(Date.now());
         parsed.marketplaces = seedMarketplaces();

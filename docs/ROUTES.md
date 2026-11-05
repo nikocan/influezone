@@ -1,8 +1,8 @@
 # Ekran ve Rota Envanteri / Screen & Route Inventory
 
 Kaynak: `src/config/routes.ts` (uygulama içinde **Güncellemeler → Ekran durumu** sekmesinde de görünür).
-**Toplam 113** — ✅ 54 çalışıyor · 🟡 4 kısmi · ⏳ 55 planlandı
 
+**Toplam 113** — ✅ 62 çalışıyor · 🟡 5 kısmi · ⏳ 46 planlandı
 
 | # | Ekran | Rota | Kabuk | Faz | Durum |
 |---|---|---|---|---|---|
@@ -54,7 +54,7 @@ Kaynak: `src/config/routes.ts` (uygulama içinde **Güncellemeler → Ekran duru
 | 46 | Fiyat alarmları | `/settings/price-alerts` | app | 3 | ✅ Çalışıyor |
 | 47 | Satıcıya yönlendirme onayı | `(outbound dialog)` | app | 3 | ✅ Çalışıyor |
 | 48 | Sipariş takibi | `/orders` | app | 4 | ⏳ Planlandı |
-| 49 | Studio genel bakış | `/studio` | studio | 4 | 🟡 Kısmi |
+| 49 | Studio genel bakış | `/studio` | studio | 4 | ✅ Çalışıyor |
 | 50 | Foto gönderi oluştur | `/create?type=photo` | app | 2 | ✅ Çalışıyor |
 | 51 | Video gönderi oluştur | `/create?type=video` | app | 2 | ✅ Çalışıyor |
 | 52 | Medya yükleme | `/create (media step)` | app | 2 | ✅ Çalışıyor |
@@ -67,18 +67,18 @@ Kaynak: `src/config/routes.ts` (uygulama içinde **Güncellemeler → Ekran duru
 | 59 | Taslaklar | `/studio/drafts` | studio | 2 | ✅ Çalışıyor |
 | 60 | Zamanlanmış gönderiler | `/studio/scheduled` | studio | 2 | ✅ Çalışıyor |
 | 61 | İçerik kütüphanesi | `/studio/content` | studio | 2 | ✅ Çalışıyor |
-| 62 | Gönderi analitiği | `/studio/analytics` | studio | 4 | ⏳ Planlandı |
-| 63 | Ürün performansı | `/studio/products` | studio | 4 | ⏳ Planlandı |
-| 64 | Affiliate bağlantıları | `/studio/links` | studio | 4 | ⏳ Planlandı |
+| 62 | Gönderi analitiği | `/studio/analytics` | studio | 4 | ✅ Çalışıyor |
+| 63 | Ürün performansı | `/studio/products` | studio | 4 | ✅ Çalışıyor |
+| 64 | Affiliate bağlantıları | `/studio/links` | studio | 4 | 🟡 Kısmi |
 | 65 | Kampanya fırsatları | `/studio/campaigns` | studio | 5 | ⏳ Planlandı |
 | 66 | Kampanya başvuruları | `/studio/campaigns/applications` | studio | 5 | ⏳ Planlandı |
 | 67 | Marka iş birlikleri | `/studio/collaborations` | studio | 5 | ⏳ Planlandı |
-| 68 | Kazançlar | `/studio/earnings` | studio | 4 | ⏳ Planlandı |
-| 69 | Komisyon işlemleri | `/studio/earnings/transactions` | studio | 4 | ⏳ Planlandı |
-| 70 | Bekleyen / onaylı / iade kazançlar | `/studio/earnings/status` | studio | 4 | ⏳ Planlandı |
-| 71 | Ödeme hesabı kurulumu | `/studio/payouts/setup` | studio | 4 | ⏳ Planlandı |
-| 72 | Ödeme talebi | `/studio/payouts/request` | studio | 4 | ⏳ Planlandı |
-| 73 | Ödeme geçmişi | `/studio/payouts` | studio | 4 | ⏳ Planlandı |
+| 68 | Kazançlar | `/studio/earnings` | studio | 4 | ✅ Çalışıyor |
+| 69 | Komisyon işlemleri | `/studio/earnings/transactions` | studio | 4 | ✅ Çalışıyor |
+| 70 | Bekleyen / onaylı / iade kazançlar | `/studio/earnings/status` | studio | 4 | ✅ Çalışıyor |
+| 71 | Ödeme hesabı kurulumu | `/studio/payouts/setup` | studio | 4 | 🟡 Kısmi |
+| 72 | Ödeme talebi | `/studio/payouts/request` | studio | 4 | ✅ Çalışıyor |
+| 73 | Ödeme geçmişi | `/studio/payouts` | studio | 4 | ✅ Çalışıyor |
 | 74 | İçerik üretici ayarları | `/studio/settings` | studio | 2 | ✅ Çalışıyor |
 | 75 | Marka paneli | `/brand` | brand | 5 | ⏳ Planlandı |
 | 76 | Organizasyon ayarları | `/brand/settings` | brand | 5 | ⏳ Planlandı |

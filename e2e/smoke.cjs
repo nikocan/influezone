@@ -172,6 +172,30 @@ async function step(name, fn) {
     await page.getByRole('radio', { name: 'For You' }).waitFor();
     await shot('e15-home-en-dark');
   });
+  await step('earnings: import sample report, idempotent re-import, balances per currency', async () => {
+    await page.goto(BASE + '/studio/earnings');
+    await page.getByRole('button', { name: /Import sample network report/ }).click();
+    await page.getByText(/5 new · 0 duplicates/).waitFor();
+    await page.getByRole('button', { name: /Import sample network report/ }).click();
+    await page.getByText(/0 new · 7 duplicates/).waitFor();
+    await page.getByText('USD', { exact: true }).first().waitFor();
+    await shot('e17-earnings');
+  });
+  await step('transactions list shows rejected self-purchase', async () => {
+    await page.goto(BASE + '/studio/earnings/transactions');
+    await page.getByRole('button', { name: 'Rejected' }).click();
+    await page.getByText('Purchase through your own link').waitFor();
+    await shot('e18-transactions');
+  });
+  await step('payout request is blocked without verified account', async () => {
+    await page.goto(BASE + '/studio/payouts/request');
+    await page.getByText(/verified payout account, KYC and tax document are required/).waitFor();
+    await shot('e19-payout');
+  });
+  await step('affiliate link creation shows tracking inactive', async () => {
+    await page.goto(BASE + '/studio/links');
+    await page.getByText('Tracking inactive — no authorised programme').first().waitFor();
+  });
   await step('admin area is blocked for normal users', async () => {
     await page.goto(BASE + '/admin');
     await page.getByText(/don’t have permission/).waitFor();

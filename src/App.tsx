@@ -28,6 +28,7 @@ import { PriceAlertsPage } from '@/pages/shop/PriceAlertsPage';
 import { AboutPage, EditProfilePage, NotFoundPage, PreferencesPage, PrivacyPage, SettingsHome } from '@/pages/settings/SettingsPages';
 import { UpdatesPage } from '@/pages/settings/UpdatesPage';
 import { PlannedScreen } from '@/pages/studio/PlannedScreen';
+import { AffiliateLinksPage, EarningsPage, PayoutHistoryPage, PayoutOnboardingPage, PayoutRequestPage, PostAnalyticsPage, ProductPerformancePage, TransactionsPage } from '@/pages/studio/MonetizationPages';
 import { ContentLibraryPage, CreatorSettingsPage, DraftsPage, StudioDashboard } from '@/pages/studio/StudioPages';
 import { EmptyState } from '@/components/common/States';
 import { ShieldOff } from 'lucide-react';
@@ -148,18 +149,18 @@ export function AppRoutes() {
             <Route path="scheduled" element={<DraftsPage kind="scheduled" />} />
             <Route path="settings" element={<CreatorSettingsPage />} />
             <Route path="ai" element={planned('aiAssistant')} />
-            <Route path="analytics" element={planned('postAnalytics')} />
-            <Route path="products" element={planned('productPerformance')} />
-            <Route path="links" element={planned('affiliateLinks')} />
+            <Route path="analytics" element={<PostAnalyticsPage />} />
+            <Route path="products" element={<ProductPerformancePage />} />
+            <Route path="links" element={<AffiliateLinksPage />} />
             <Route path="campaigns" element={planned('campaignOpportunities')} />
             <Route path="campaigns/applications" element={planned('campaignApplications')} />
             <Route path="collaborations" element={planned('brandCollaborations')} />
-            <Route path="earnings" element={planned('earnings')} />
-            <Route path="earnings/transactions" element={planned('commissionTransactions')} />
-            <Route path="earnings/status" element={planned('earningsStatus')} />
-            <Route path="payouts" element={planned('payoutHistory')} />
-            <Route path="payouts/setup" element={planned('payoutOnboarding')} />
-            <Route path="payouts/request" element={planned('payoutRequest')} />
+            <Route path="earnings" element={<EarningsPage />} />
+            <Route path="earnings/transactions" element={<TransactionsPage />} />
+            <Route path="earnings/status" element={<TransactionsPage initial="confirmed" />} />
+            <Route path="payouts" element={<PayoutHistoryPage />} />
+            <Route path="payouts/setup" element={<PayoutOnboardingPage />} />
+            <Route path="payouts/request" element={<PayoutRequestPage />} />
           </Route>
 
           <Route path="/brand" element={<PortalShell titleKey="nav.brandPortal" nav={BRAND_NAV} tone="brand" />}>

@@ -12,6 +12,31 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3.0',
+    date: '2026-11-05',
+    title: { tr: 'Faz 4: İçerik üretici gelirleri (ödeme gönderimi kapalı)', en: 'Phase 4: Creator monetisation (payout sending disabled)' },
+    items: [
+      { area: 'security', tr: 'Değiştirilemez çift taraflı muhasebe defteri: her işlem sıfıra dengelenir, kayıtlar silinemez/değiştirilemez; düzeltmeler ters kayıtla yapılır', en: 'Immutable double-entry ledger: every transaction balances to zero; entries cannot be edited or deleted, corrections are reversing entries' },
+      { area: 'creator', tr: 'Dönüşüm içe aktarma: aynı satış bildirimi iki kez sayılmaz; atıf süresi dışındaki ve kendi bağlantınla yapılan alımlar reddedilir', en: 'Conversion ingestion: the same sale report is never counted twice; out-of-window and self-purchases are rejected' },
+      { area: 'creator', tr: 'Komisyon kuralları (en özel kural kazanır), bloke/iade süresi, kısmi ve tam iade düşümü', en: 'Commission rules (most specific wins), hold/refund window, partial and full refund reversals' },
+      { area: 'creator', tr: 'Kazançlar ekranı: Tahmini / Beklemede / Onaylı / Çekilebilir / Ödemede / Ödendi / İade — her para birimi ayrı', en: 'Earnings screen: Estimated / Pending / Approved / Available / In payout / Paid / Reversed — per currency' },
+      { area: 'creator', tr: 'Komisyon işlemleri listesi (durum filtresi, red nedeni, iade tutarı)', en: 'Commission transactions list (status filter, rejection reason, reversed amount)' },
+      { area: 'creator', tr: 'Affiliate bağlantı yöneticisi (yetkili program yoksa "takip etkin değil" açıkça yazılır)', en: 'Affiliate link manager (clearly shows "tracking inactive" without an authorised programme)' },
+      { area: 'creator', tr: 'Ödeme hesabı kurulumu, ödeme talebi (doğrulanmış hesap + KYC + vergi belgesi şartı, bakiye blokesi) ve ödeme geçmişi zaman çizelgesi', en: 'Payout account setup, payout request (verified account + KYC + tax form required, funds held) and payout history timeline' },
+      { area: 'creator', tr: 'Gönderi analitiği (etkileşim oranı) ve ürün performansı (tıklama → onaylı satış)', en: 'Post analytics (engagement rate) and product performance (clicks → confirmed sales)' },
+      { area: 'admin', tr: 'Yönetici ödeme onayı (kişi kendi ödemesini onaylayamaz), özellik bayrağı ile kapalı ödeme gönderimi, tüm finans işlemleri denetim kaydına yazılır', en: 'Admin payout review (no self-approval), payout sending gated by a feature flag, all financial actions audited' },
+      { area: 'quality', tr: '30 yeni veritabanı finans testi (toplam 76), 10 yeni birim testi (toplam 62), uçtan uca senaryo 23 adım', en: '30 new database finance tests (76 total), 10 new unit tests (62 total), end-to-end scenario 23 steps' },
+      { area: 'quality', tr: 'Düzeltme: demo ile veritabanı arasındaki kuruş yuvarlama farkı giderildi (262,465 → 262,47)', en: 'Fix: cent rounding mismatch between demo and database resolved (262.465 → 262.47)' },
+      { area: 'quality', tr: 'Düzeltme: geç yüklenen görseller artık yedek görüntüde takılı kalmıyor', en: 'Fix: images whose source loads late no longer stay stuck on the fallback' },
+    ],
+    pending: [
+      { tr: 'Gerçek affiliate ağı / satıcı sözleşmesi ve imzalı webhook ile dönüşüm alımı', en: 'Real affiliate network / merchant contract and signed-webhook conversion ingestion' },
+      { tr: 'Ödeme sağlayıcı (ör. Stripe Connect, Wise), KYC ve vergi belgesi entegrasyonu — ödeme gönderimi bunlar doğrulanana kadar kapalı', en: 'Payout provider (e.g. Stripe Connect, Wise), KYC and tax-form integration — payout sending stays off until verified' },
+      { tr: 'Bloke süresi dolan kayıtları otomatik onaylayan sunucu görevi (pg_cron)', en: 'Server job (pg_cron) that releases conversions after the hold window' },
+      { tr: 'Yönetici ödeme inceleme ve mutabakat ekranları (Faz 6)', en: 'Admin payout review and reconciliation screens (Phase 6)' },
+    ],
+  },
+  {
     version: '0.2.0',
     date: '2026-10-31',
     title: { tr: 'Shopfluence temeli: Faz 1 + Faz 2', en: 'Shopfluence foundation: Phase 1 + Phase 2' },

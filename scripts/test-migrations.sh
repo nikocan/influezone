@@ -22,8 +22,14 @@ for f in "$ROOT"/supabase/migrations/*.sql; do
 done
 "${PSQL[@]}" -c "grant select, insert, update, delete on all tables in schema public to authenticated, anon; grant execute on all functions in schema public to authenticated, anon;"
 set +e
-OUT="$("${PSQL[@]}" -f "$ROOT/supabase/tests/10_rls_tests.sql" 2>&1)"
-STATUS=$?
+STATUS=0
+OUT=""
+for t in "$ROOT"/supabase/tests/[1-9]*.sql; do
+  R="$("${PSQL[@]}" -f "$t" 2>&1)" || STATUS=1
+  OUT="$OUT
+$R"
+  [ $STATUS -ne 0 ] && break
+done
 set -e
 echo "$OUT" | grep -E "ok -|FAILED|ERROR|PASSED" | sed 's/^psql:[^ ]* //'
 exit $STATUS
