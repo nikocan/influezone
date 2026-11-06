@@ -357,3 +357,143 @@ export interface ClickStat {
   confirmedConversions: number;
   creatorEarned: { currency: string; amount: number }[];
 }
+
+// ---------------------------------------------------------------------------
+// Phase 5 — brand portal
+// ---------------------------------------------------------------------------
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  website: string | null;
+  country: string;
+  verificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected';
+  brandProfileId: string | null;
+  createdAt: string;
+  isSample: boolean;
+}
+
+export interface OrgMembership {
+  organization: Organization;
+  role: OrgRole;
+}
+
+export interface OrgMember {
+  userId: string;
+  profileId: string;
+  role: OrgRole;
+}
+
+export type CampaignStatus = 'draft' | 'pending_approval' | 'open' | 'in_progress' | 'completed' | 'paused' | 'cancelled';
+export type CampaignType = 'affiliate' | 'fixed_fee' | 'hybrid';
+
+export interface CampaignDeliverableSpec {
+  kind: 'post' | 'video' | 'carousel';
+  count: number;
+}
+
+export interface Campaign {
+  id: string;
+  organizationId: string;
+  brandProfileId: string | null;
+  title: string;
+  objective: 'awareness' | 'traffic' | 'sales' | 'launch';
+  brief: string;
+  type: CampaignType;
+  currency: string;
+  budget: number | null;
+  fixedFee: number | null;
+  commissionBps: number | null;
+  countries: string[];
+  categories: string[];
+  minFollowers: number;
+  deliverables: CampaignDeliverableSpec[];
+  requiredDisclosure: Exclude<Disclosure, 'none'>;
+  productIds: string[];
+  applicationDeadline: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  status: CampaignStatus;
+  rejectionNote: string | null;
+  createdAt: string;
+  isSample: boolean;
+}
+
+export type CampaignInput = Omit<Campaign, 'id' | 'organizationId' | 'brandProfileId' | 'status' | 'rejectionNote' | 'createdAt' | 'isSample'>;
+
+export interface CampaignApplication {
+  id: string;
+  campaignId: string;
+  creatorId: string;
+  pitch: string;
+  proposedFee: number | null;
+  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+  createdAt: string;
+}
+
+export interface CampaignInvitation {
+  id: string;
+  campaignId: string;
+  creatorId: string;
+  message: string;
+  status: 'sent' | 'accepted' | 'declined' | 'revoked';
+  createdAt: string;
+}
+
+export interface CampaignParticipant {
+  campaignId: string;
+  creatorId: string;
+  source: 'application' | 'invitation';
+  agreedFee: number | null;
+  status: 'active' | 'completed' | 'removed';
+  joinedAt: string;
+}
+
+export interface CampaignDeliverable {
+  id: string;
+  campaignId: string;
+  creatorId: string;
+  postId: string;
+  note: string;
+  status: 'submitted' | 'approved' | 'changes_requested';
+  feedback: string | null;
+  submittedAt: string;
+}
+
+export interface CreatorDiscoveryFilters {
+  q?: string;
+  category?: string | null;
+  country?: string | null;
+  minFollowers?: number;
+  verifiedOnly?: boolean;
+}
+
+export interface CreatorCard {
+  profile: Profile;
+  posts: number;
+  avgEngagementRate: number;
+  disclosedShare: number;
+  categories: string[];
+}
+
+export interface CampaignPerformance {
+  campaignId: string;
+  participants: number;
+  deliverablesApproved: number;
+  deliverablesPending: number;
+  views: number;
+  engagements: number;
+  productClicks: number;
+  confirmedConversions: number;
+  committedFees: number;
+}
+
+export interface NewProductInput {
+  title: string;
+  variant: string | null;
+  description: string;
+  category: string;
+  gtin: string | null;
+  countries: string[];
+  imageUrl: string | null;
+}

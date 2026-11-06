@@ -1,4 +1,19 @@
 import type {
+  Campaign,
+  CampaignApplication,
+  CampaignDeliverable,
+  CampaignInput,
+  CampaignInvitation,
+  CampaignParticipant,
+  CampaignPerformance,
+  CampaignStatus,
+  CreatorCard,
+  CreatorDiscoveryFilters,
+  NewProductInput,
+  OrgMember,
+  OrgMembership,
+  OrgRole,
+  Organization,
   AffiliateLink,
   ClickStat,
   Conversion,
@@ -135,6 +150,39 @@ export interface Repository {
   requestPayout(currency: string, amount: number): Promise<Payout>;
   /** DEMO ONLY: imports a clearly labelled sample network report (idempotent). */
   importSampleConversionReport?(): Promise<{ imported: number; duplicates: number; rejected: number; updated: number; released: number }>;
+
+  // Brand portal — organisation-scoped. Every call is authorised by membership role server-side.
+  listMyOrganizations(): Promise<OrgMembership[]>;
+  registerBrand(input: { name: string; slug: string; country: string; website: string | null; username: string }): Promise<Organization>;
+  updateOrganization(orgId: string, patch: { name?: string; website?: string | null; country?: string }): Promise<Organization>;
+  listOrgMembers(orgId: string): Promise<OrgMember[]>;
+  addOrgMember(orgId: string, username: string, role: Exclude<OrgRole, 'owner'>): Promise<void>;
+  removeOrgMember(orgId: string, userId: string): Promise<void>;
+  listOrgProducts(orgId: string): Promise<Product[]>;
+  createOrgProduct(orgId: string, input: NewProductInput): Promise<Product>;
+  listCampaigns(orgId: string): Promise<Campaign[]>;
+  getCampaign(id: string): Promise<Campaign | null>;
+  saveCampaign(orgId: string, input: CampaignInput, id?: string): Promise<Campaign>;
+  setCampaignStatus(id: string, status: CampaignStatus, note?: string): Promise<Campaign>;
+  discoverCreators(filters: CreatorDiscoveryFilters): Promise<CreatorCard[]>;
+  inviteCreator(campaignId: string, creatorId: string, message: string): Promise<CampaignInvitation>;
+  listOrgInvitations(orgId: string): Promise<CampaignInvitation[]>;
+  listOrgApplications(orgId: string): Promise<CampaignApplication[]>;
+  reviewApplication(id: string, accept: boolean): Promise<void>;
+  listCampaignParticipants(campaignId: string): Promise<CampaignParticipant[]>;
+  listOrgDeliverables(orgId: string): Promise<CampaignDeliverable[]>;
+  reviewDeliverable(id: string, approve: boolean, feedback: string): Promise<void>;
+  getCampaignPerformance(campaignId: string): Promise<CampaignPerformance>;
+  // Creator side of campaigns
+  listOpenCampaigns(): Promise<Campaign[]>;
+  applyToCampaign(campaignId: string, pitch: string, proposedFee: number | null): Promise<CampaignApplication>;
+  withdrawApplication(id: string): Promise<void>;
+  listMyApplications(): Promise<CampaignApplication[]>;
+  listMyInvitations(): Promise<CampaignInvitation[]>;
+  respondInvitation(id: string, accept: boolean): Promise<void>;
+  listMyParticipations(): Promise<CampaignParticipant[]>;
+  listMyDeliverables(): Promise<CampaignDeliverable[]>;
+  submitDeliverable(campaignId: string, postId: string, note: string): Promise<CampaignDeliverable>;
 
   // Safety
   report(targetType: ReportTarget, targetId: string, reason: ReportReason, details: string): Promise<ModerationReport>;

@@ -2,6 +2,21 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Repository } from '../repository';
 import type {
+  Campaign,
+  CampaignApplication,
+  CampaignDeliverable,
+  CampaignInput,
+  CampaignInvitation,
+  CampaignParticipant,
+  CampaignPerformance,
+  CampaignStatus,
+  CreatorCard,
+  CreatorDiscoveryFilters,
+  NewProductInput,
+  OrgMember,
+  OrgMembership,
+  OrgRole,
+  Organization,
   AffiliateLink,
   ClickStat,
   Conversion,
@@ -41,6 +56,9 @@ type Row = Record<string, any>;
 
 function fail(e: PostgrestError | null): void {
   if (!e) return;
+  const map: Record<string, AppError['code']> = { not_eligible: 'not_eligible', campaign_not_open: 'campaign_not_open', deadline_passed: 'campaign_not_open', already_applied: 'already_applied', already_invited: 'already_applied', already_submitted: 'already_applied', disclosure_mismatch: 'disclosure_mismatch', not_participant: 'not_participant', 'invalid campaign status transition': 'invalid_transition', 'terms are locked': 'forbidden' };
+  for (const [k, v] of Object.entries(map)) if (e.message.includes(k)) throw new AppError(v);
+  if (e.code === '23505' && e.message.includes('organizations_slug')) throw new AppError('slug_taken');
   for (const code of ['payout_account_not_verified', 'payout_already_open', 'insufficient_available_balance', 'payout_execution_disabled'] as const) {
     if (e.message.includes(code)) {
       throw new AppError(code === 'payout_account_not_verified' ? 'payout_not_eligible' : code === 'payout_already_open' ? 'payout_open' : code === 'insufficient_available_balance' ? 'insufficient_funds' : 'payout_execution_disabled');
@@ -672,6 +690,247 @@ export class SupabaseRepository implements Repository {
     const { data, error } = await this.sb.rpc('request_payout', { _creator: this.me(), _currency: currency, _amount: amount });
     fail(error);
     return (await this.listPayouts()).find((p) => p.id === data)!;
+  }
+
+  // ---------- Brand portal ----------
+  private org(r: Row): Organization {
+    const bp = (r.profiles ?? []).find((p: Row) => p.kind === 'brand');
+    return { id: r.id, name: r.name, slug: r.slug, website: r.website, country: r.country, verificationStatus: r.verification_status, brandProfileId: bp?.id ?? null, createdAt: r.created_at, isSample: false };
+  }
+  private campaign(r: Row): Campaign {
+    return {
+      id: r.id, organizationId: r.organization_id, brandProfileId: r.brand_profile_id, title: r.title, objective: r.objective, brief: r.brief, type: r.type, currency: r.currency,
+      budget: r.budget === null ? null : Number(r.budget), fixedFee: r.fixed_fee === null ? null : Number(r.fixed_fee), commissionBps: r.commission_bps, countries: r.countries ?? [],
+      categories: r.categories ?? [], minFollowers: r.min_followers, deliverables: r.deliverables ?? [], requiredDisclosure: r.required_disclosure, productIds: r.product_ids ?? [],
+      applicationDeadline: r.application_deadline, startsAt: r.starts_at, endsAt: r.ends_at, status: r.status, rejectionNote: r.rejection_note, createdAt: r.created_at, isSample: false,
+    };
+  }
+  private campaignRow(input: CampaignInput): Row {
+    return {
+      title: input.title, objective: input.objective, brief: input.brief, type: input.type, currency: input.currency, budget: input.budget, fixed_fee: input.fixedFee, commission_bps: input.commissionBps,
+      countries: input.countries, categories: input.categories, min_followers: input.minFollowers, deliverables: input.deliverables, required_disclosure: input.requiredDisclosure,
+      product_ids: input.productIds, application_deadline: input.applicationDeadline, starts_at: input.startsAt, ends_at: input.endsAt,
+    };
+  }
+  async listMyOrganizations(): Promise<OrgMembership[]> {
+    const { data: auth } = await this.sb.auth.getUser();
+    const { data, error } = await this.sb.from('organization_members').select('role, organizations(*, profiles(id, kind))').eq('user_id', auth.user?.id ?? '');
+    fail(error);
+    return (data ?? []).map((r: Row) => ({ role: r.role, organization: this.org(r.organizations) }));
+  }
+  async registerBrand(input: { name: string; slug: string; country: string; website: string | null; username: string }) {
+    const { data, error } = await this.sb.rpc('register_brand', { _name: input.name, _slug: input.slug, _country: input.country, _website: input.website ?? '', _username: input.username });
+    if (error?.code === '23505') throw new AppError(error.message.includes('username') ? 'username_taken' : 'slug_taken');
+    fail(error);
+    return (await this.listMyOrganizations()).find((m) => m.organization.id === data)!.organization;
+  }
+  async updateOrganization(orgId: string, patch: { name?: string; website?: string | null; country?: string }) {
+    const { data, error } = await this.sb.from('organizations').update(patch).eq('id', orgId).select('*, profiles(id, kind)').single();
+    fail(error);
+    return this.org(data!);
+  }
+  async listOrgMembers(orgId: string): Promise<OrgMember[]> {
+    const { data, error } = await this.sb.from('organization_members').select('user_id, role').eq('organization_id', orgId);
+    fail(error);
+    return (data ?? []).map((r) => ({ userId: r.user_id, profileId: r.user_id, role: r.role }));
+  }
+  async addOrgMember(orgId: string, username: string, role: Exclude<OrgRole, 'owner'>) {
+    const { error } = await this.sb.rpc('add_org_member', { _org: orgId, _username: username, _role: role });
+    fail(error);
+  }
+  async removeOrgMember(orgId: string, userId: string) {
+    const { error } = await this.sb.from('organization_members').delete().eq('organization_id', orgId).eq('user_id', userId);
+    fail(error);
+  }
+  async listOrgProducts(orgId: string) {
+    const { data, error } = await this.sb.from('products').select('*, product_variants(*)').eq('organization_id', orgId).order('created_at', { ascending: false });
+    fail(error);
+    return (data ?? []).map((r) => this.product(r));
+  }
+  async createOrgProduct(orgId: string, input: NewProductInput) {
+    const org = (await this.listMyOrganizations()).find((m) => m.organization.id === orgId)?.organization;
+    const { data, error } = await this.sb.from('products').insert({
+      organization_id: orgId, brand_profile_id: org?.brandProfileId ?? null, brand_name: org?.name ?? '', title: input.title, description: input.description, category: input.category,
+      images: input.imageUrl ? [input.imageUrl] : [], countries: input.countries, status: 'pending_review', submitted_by: (await this.sb.auth.getUser()).data.user?.id,
+    }).select('*').single();
+    fail(error);
+    if (input.variant || input.gtin) {
+      const r = await this.sb.from('product_variants').insert({ product_id: data!.id, label: input.variant ?? 'default', gtin: input.gtin });
+      fail(r.error);
+    }
+    return this.product({ ...data, product_variants: [{ label: input.variant, gtin: input.gtin }] });
+  }
+  async listCampaigns(orgId: string) {
+    const { data, error } = await this.sb.from('campaigns').select('*').eq('organization_id', orgId).order('created_at', { ascending: false });
+    fail(error);
+    return (data ?? []).map((r) => this.campaign(r));
+  }
+  async getCampaign(id: string) {
+    const { data, error } = await this.sb.from('campaigns').select('*').eq('id', id).maybeSingle();
+    fail(error);
+    return data ? this.campaign(data) : null;
+  }
+  async saveCampaign(orgId: string, input: CampaignInput, id?: string) {
+    if (id) {
+      const { data, error } = await this.sb.from('campaigns').update(this.campaignRow(input)).eq('id', id).select('*').single();
+      fail(error);
+      return this.campaign(data!);
+    }
+    const org = (await this.listMyOrganizations()).find((m) => m.organization.id === orgId)?.organization;
+    const { data, error } = await this.sb.from('campaigns').insert({ ...this.campaignRow(input), organization_id: orgId, brand_profile_id: org?.brandProfileId ?? null, created_by: (await this.sb.auth.getUser()).data.user?.id }).select('*').single();
+    fail(error);
+    return this.campaign(data!);
+  }
+  async setCampaignStatus(id: string, status: CampaignStatus, note?: string) {
+    const { data, error } = await this.sb.from('campaigns').update({ status, rejection_note: note ?? null }).eq('id', id).select('*').single();
+    fail(error);
+    return this.campaign(data!);
+  }
+  async discoverCreators(f: CreatorDiscoveryFilters): Promise<CreatorCard[]> {
+    let q = this.sb.from('profiles').select('*').eq('kind', 'person').eq('is_creator', true).gte('follower_count', f.minFollowers ?? 0).order('follower_count', { ascending: false }).limit(60);
+    const s = sanitizeLike(f.q ?? '');
+    if (s) q = q.or(`username.ilike.%${s}%,display_name.ilike.%${s}%`);
+    if (f.country) q = q.eq('country', f.country);
+    if (f.verifiedOnly) q = q.eq('verified', true);
+    if (f.category) q = q.contains('interests', [f.category]);
+    const { data, error } = await q;
+    fail(error);
+    const profiles = (data ?? []).map((r) => this.profile(r));
+    const posts = profiles.length ? (await this.sb.from('posts').select('author_id, like_count, comment_count, save_count, share_count, view_count, disclosure, category').in('author_id', profiles.map((p) => p.id)).eq('status', 'published').limit(2000)).data ?? [] : [];
+    return profiles.map((p) => {
+      const mine = posts.filter((x) => x.author_id === p.id);
+      const rates = mine.filter((x) => Number(x.view_count) > 0).map((x) => (x.like_count + x.comment_count + x.save_count + x.share_count) / Number(x.view_count));
+      return {
+        profile: p, posts: mine.length,
+        avgEngagementRate: rates.length ? Math.round((rates.reduce((a, b) => a + b, 0) / rates.length) * 1000) / 10 : 0,
+        disclosedShare: mine.length ? Math.round((mine.filter((x) => x.disclosure !== 'none').length / mine.length) * 100) : 0,
+        categories: [...new Set(mine.map((x) => x.category as string | null).filter((x): x is string => !!x))],
+      };
+    });
+  }
+  private application(r: Row): CampaignApplication {
+    return { id: r.id, campaignId: r.campaign_id, creatorId: r.creator_id, pitch: r.pitch, proposedFee: r.proposed_fee === null ? null : Number(r.proposed_fee), status: r.status, createdAt: r.created_at };
+  }
+  private invitation(r: Row): CampaignInvitation {
+    return { id: r.id, campaignId: r.campaign_id, creatorId: r.creator_id, message: r.message, status: r.status, createdAt: r.created_at };
+  }
+  private participant(r: Row): CampaignParticipant {
+    return { campaignId: r.campaign_id, creatorId: r.creator_id, source: r.source, agreedFee: r.agreed_fee === null ? null : Number(r.agreed_fee), status: r.status, joinedAt: r.joined_at };
+  }
+  private deliverable(r: Row): CampaignDeliverable {
+    return { id: r.id, campaignId: r.campaign_id, creatorId: r.creator_id, postId: r.post_id, note: r.note, status: r.status, feedback: r.feedback, submittedAt: r.submitted_at };
+  }
+  async inviteCreator(campaignId: string, creatorId: string, message: string) {
+    const { data, error } = await this.sb.rpc('invite_creator', { _campaign: campaignId, _creator: creatorId, _message: message });
+    fail(error);
+    const r = await this.sb.from('campaign_invitations').select('*').eq('id', data).single();
+    fail(r.error);
+    return this.invitation(r.data!);
+  }
+  private async orgCampaignIds(orgId: string) {
+    return (await this.listCampaigns(orgId)).map((c) => c.id);
+  }
+  async listOrgInvitations(orgId: string) {
+    const ids = await this.orgCampaignIds(orgId);
+    if (!ids.length) return [];
+    const { data, error } = await this.sb.from('campaign_invitations').select('*').in('campaign_id', ids);
+    fail(error);
+    return (data ?? []).map((r) => this.invitation(r));
+  }
+  async listOrgApplications(orgId: string) {
+    const ids = await this.orgCampaignIds(orgId);
+    if (!ids.length) return [];
+    const { data, error } = await this.sb.from('campaign_applications').select('*').in('campaign_id', ids).neq('status', 'withdrawn').order('created_at', { ascending: false });
+    fail(error);
+    return (data ?? []).map((r) => this.application(r));
+  }
+  async reviewApplication(id: string, accept: boolean) {
+    const { error } = await this.sb.rpc('review_application', { _app: id, _accept: accept });
+    fail(error);
+  }
+  async listCampaignParticipants(campaignId: string) {
+    const { data, error } = await this.sb.from('campaign_participants').select('*').eq('campaign_id', campaignId);
+    fail(error);
+    return (data ?? []).map((r) => this.participant(r));
+  }
+  async listOrgDeliverables(orgId: string) {
+    const ids = await this.orgCampaignIds(orgId);
+    if (!ids.length) return [];
+    const { data, error } = await this.sb.from('campaign_deliverables').select('*').in('campaign_id', ids).order('submitted_at', { ascending: false });
+    fail(error);
+    return (data ?? []).map((r) => this.deliverable(r));
+  }
+  async reviewDeliverable(id: string, approve: boolean, feedback: string) {
+    const { error } = await this.sb.rpc('review_deliverable', { _d: id, _approve: approve, _feedback: feedback });
+    fail(error);
+  }
+  async getCampaignPerformance(campaignId: string): Promise<CampaignPerformance> {
+    const [c, parts, dels] = await Promise.all([
+      this.getCampaign(campaignId),
+      this.listCampaignParticipants(campaignId),
+      this.sb.from('campaign_deliverables').select('*, posts(view_count, like_count, comment_count, save_count, share_count)').eq('campaign_id', campaignId),
+    ]);
+    fail(dels.error);
+    const approved = (dels.data ?? []).filter((x: Row) => x.status === 'approved');
+    return {
+      campaignId,
+      participants: parts.filter((p) => p.status !== 'removed').length,
+      deliverablesApproved: approved.length,
+      deliverablesPending: (dels.data ?? []).filter((x: Row) => x.status === 'submitted').length,
+      views: approved.reduce((s: number, x: Row) => s + Number(x.posts?.view_count ?? 0), 0),
+      engagements: approved.reduce((s: number, x: Row) => s + (x.posts ? x.posts.like_count + x.posts.comment_count + x.posts.save_count + x.posts.share_count : 0), 0),
+      // clicks & conversions are creator-private under RLS; aggregated brand reporting needs a server-side report function (Phase 6)
+      productClicks: 0,
+      confirmedConversions: 0,
+      committedFees: c ? parts.reduce((s, p) => s + (p.agreedFee ?? 0), 0) : 0,
+    };
+  }
+  async listOpenCampaigns() {
+    const { data, error } = await this.sb.from('campaigns').select('*').eq('status', 'open').order('application_deadline', { ascending: true });
+    fail(error);
+    return (data ?? []).map((r) => this.campaign(r));
+  }
+  async applyToCampaign(campaignId: string, pitch: string, proposedFee: number | null) {
+    const { data, error } = await this.sb.rpc('apply_to_campaign', { _campaign: campaignId, _creator: this.me(), _pitch: pitch, _fee: proposedFee });
+    fail(error);
+    const r = await this.sb.from('campaign_applications').select('*').eq('id', data).single();
+    fail(r.error);
+    return this.application(r.data!);
+  }
+  async withdrawApplication(id: string) {
+    const { error } = await this.sb.rpc('withdraw_application', { _app: id });
+    fail(error);
+  }
+  async listMyApplications() {
+    const { data, error } = await this.sb.from('campaign_applications').select('*').eq('creator_id', this.me());
+    fail(error);
+    return (data ?? []).map((r) => this.application(r));
+  }
+  async listMyInvitations() {
+    const { data, error } = await this.sb.from('campaign_invitations').select('*').eq('creator_id', this.me());
+    fail(error);
+    return (data ?? []).map((r) => this.invitation(r));
+  }
+  async respondInvitation(id: string, accept: boolean) {
+    const { error } = await this.sb.rpc('respond_invitation', { _inv: id, _accept: accept });
+    fail(error);
+  }
+  async listMyParticipations() {
+    const { data, error } = await this.sb.from('campaign_participants').select('*').eq('creator_id', this.me());
+    fail(error);
+    return (data ?? []).map((r) => this.participant(r));
+  }
+  async listMyDeliverables() {
+    const { data, error } = await this.sb.from('campaign_deliverables').select('*').eq('creator_id', this.me());
+    fail(error);
+    return (data ?? []).map((r) => this.deliverable(r));
+  }
+  async submitDeliverable(campaignId: string, postId: string, note: string) {
+    const { data, error } = await this.sb.rpc('submit_deliverable', { _campaign: campaignId, _creator: this.me(), _post: postId, _note: note });
+    fail(error);
+    const r = await this.sb.from('campaign_deliverables').select('*').eq('id', data).single();
+    fail(r.error);
+    return this.deliverable(r.data!);
   }
 
   // ---------- Safety ----------

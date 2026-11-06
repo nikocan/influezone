@@ -200,6 +200,55 @@ async function step(name, fn) {
     await page.goto(BASE + '/admin');
     await page.getByText(/don’t have permission/).waitFor();
   });
+  await step('brand registration', async () => {
+    await page.goto(BASE + '/brand');
+    await page.getByRole('link', { name: 'Register brand' }).click();
+    await page.getByLabel('Brand name', { exact: true }).fill('Test Brand ' + user);
+    await page.getByRole('checkbox').check();
+    await page.getByRole('button', { name: 'Register brand' }).click();
+    await page.getByText(/Test Brand .* dashboard/).waitFor();
+    await shot('e20-brand-dashboard');
+  });
+  await step('create campaign and submit for approval (cannot self-approve)', async () => {
+    await page.goto(BASE + '/brand/campaigns/new');
+    await page.getByLabel('Campaign name').fill('Winter capsule');
+    await page.getByLabel('Fixed fee (per creator)').fill('3000');
+    await page.getByLabel('Brief').fill('Show 3 outfits with our product. No medical claims.');
+    await shot('e21-campaign-builder');
+    await page.getByRole('button', { name: 'Submit for approval' }).click();
+    await page.getByText('Pending approval').first().waitFor();
+    if (await page.getByRole('button', { name: /Approve & publish/ }).count()) throw new Error('brand should not see approve');
+  });
+  await step('platform approval (demo admin role) publishes campaign', async () => {
+    const url = page.url();
+    await page.goto(BASE + '/settings/about');
+    await page.getByRole('button', { name: /Grant admin role/ }).click();
+    await page.getByText(/Admin role granted/).waitFor();
+    await page.goto(url);
+    await page.getByRole('button', { name: /Approve & publish/ }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page.getByText('Open for applications').first().waitFor();
+    await shot('e22-campaign-open');
+  });
+  await step('creator discovery → invite', async () => {
+    await page.goto(BASE + '/brand/creators');
+    const card = page.locator('li', { hasText: 'Elif Aydın' }).first();
+    await card.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Send invitation' }).click();
+    await page.getByText('Invitation sent').first().waitFor();
+    await shot('e23-discovery');
+    await page.goto(BASE + '/brand/invitations');
+    await page.getByText('Elif Aydın').waitFor();
+  });
+  await step('creator applies to a sample campaign', async () => {
+    await page.goto(BASE + '/studio/campaigns');
+    const card = page.locator('li', { hasText: 'Aurelia Classic 38' }).first();
+    await card.getByRole('button', { name: 'Apply' }).click();
+    await page.getByLabel('Why you?').fill('I style watches daily for my audience.');
+    await page.getByRole('button', { name: 'Send application' }).click();
+    await page.getByText('Application sent').first().waitFor();
+    await shot('e24-opportunities');
+  });
   await step('desktop layout renders left rail', async () => {
     await page.setViewportSize({ width: 1280, height: 860 });
     await page.goto(BASE + '/');

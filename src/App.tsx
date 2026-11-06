@@ -29,6 +29,10 @@ import { AboutPage, EditProfilePage, NotFoundPage, PreferencesPage, PrivacyPage,
 import { UpdatesPage } from '@/pages/settings/UpdatesPage';
 import { PlannedScreen } from '@/pages/studio/PlannedScreen';
 import { AffiliateLinksPage, EarningsPage, PayoutHistoryPage, PayoutOnboardingPage, PayoutRequestPage, PostAnalyticsPage, ProductPerformancePage, TransactionsPage } from '@/pages/studio/MonetizationPages';
+import { BrandGate } from '@/pages/brand/brandCommon';
+import { BrandCommissionRulesPage, BrandDashboard, BrandOffersPage, BrandRegistrationPage, CatalogPage, OrgSettingsPage, ProductEditPage, TeamPage } from '@/pages/brand/BrandOrgPages';
+import { ApplicationsPage, CampaignDetailPage, CampaignEditorPage, CampaignListPage, CampaignPerformancePage, CollabInboxPage, CreatorComparePage, CreatorDiscoveryPage, DeliverablesPage, InvitationsPage } from '@/pages/brand/BrandCampaignPages';
+import { CollaborationsPage, MyApplicationsPage, OpportunitiesPage } from '@/pages/studio/CreatorCampaignPages';
 import { ContentLibraryPage, CreatorSettingsPage, DraftsPage, StudioDashboard } from '@/pages/studio/StudioPages';
 import { EmptyState } from '@/components/common/States';
 import { ShieldOff } from 'lucide-react';
@@ -99,7 +103,7 @@ export function AppRoutes() {
       <Route element={<RequireAuth />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/onboarding/creator" element={<CreatorOnboardingPage />} />
-        <Route path="/onboarding/brand" element={<div className="p-4">{planned('brandRegistration')}</div>} />
+        <Route path="/onboarding/brand" element={<BrandRegistrationPage />} />
       </Route>
 
       <Route element={<Gates />}>
@@ -152,9 +156,9 @@ export function AppRoutes() {
             <Route path="analytics" element={<PostAnalyticsPage />} />
             <Route path="products" element={<ProductPerformancePage />} />
             <Route path="links" element={<AffiliateLinksPage />} />
-            <Route path="campaigns" element={planned('campaignOpportunities')} />
-            <Route path="campaigns/applications" element={planned('campaignApplications')} />
-            <Route path="collaborations" element={planned('brandCollaborations')} />
+            <Route path="campaigns" element={<OpportunitiesPage />} />
+            <Route path="campaigns/applications" element={<MyApplicationsPage />} />
+            <Route path="collaborations" element={<CollaborationsPage />} />
             <Route path="earnings" element={<EarningsPage />} />
             <Route path="earnings/transactions" element={<TransactionsPage />} />
             <Route path="earnings/status" element={<TransactionsPage initial="confirmed" />} />
@@ -164,13 +168,30 @@ export function AppRoutes() {
           </Route>
 
           <Route path="/brand" element={<PortalShell titleKey="nav.brandPortal" nav={BRAND_NAV} tone="brand" />}>
-            <Route index element={planned('brandDashboard')} />
-            {([
-              ['settings', 'brandOrgSettings'], ['catalog', 'brandCatalog'], ['catalog/:id', 'brandProductEdit'], ['offers', 'brandOffers'], ['commissions', 'brandCommissionRules'],
-              ['campaigns', 'campaignList'], ['campaigns/new', 'campaignCreate'], ['campaigns/new/budget', 'campaignBudget'], ['creators', 'creatorDiscovery'], ['creators/compare', 'creatorComparison'],
-              ['invitations', 'invitations'], ['applications', 'applications'], ['deliverables', 'deliverables'], ['inbox', 'collabInbox'], ['performance', 'campaignPerformance'],
-              ['roi', 'roiReporting'], ['billing', 'brandBilling'], ['team', 'teamPermissions'],
-            ] as const).map(([path, key]) => <Route key={path} path={path} element={planned(key)} />)}
+            <Route element={<BrandGate />}>
+              <Route index element={<BrandDashboard />} />
+              <Route path="settings" element={<OrgSettingsPage />} />
+              <Route path="team" element={<TeamPage />} />
+              <Route path="catalog" element={<CatalogPage />} />
+              <Route path="catalog/new" element={<ProductEditPage />} />
+              <Route path="catalog/:id" element={<ProductEditPage />} />
+              <Route path="offers" element={<BrandOffersPage />} />
+              <Route path="commissions" element={<BrandCommissionRulesPage />} />
+              <Route path="campaigns" element={<CampaignListPage />} />
+              <Route path="campaigns/new" element={<CampaignEditorPage />} />
+              <Route path="campaigns/new/budget" element={<CampaignEditorPage />} />
+              <Route path="campaigns/:id" element={<CampaignDetailPage />} />
+              <Route path="campaigns/:id/edit" element={<CampaignEditorPage />} />
+              <Route path="creators" element={<CreatorDiscoveryPage />} />
+              <Route path="creators/compare" element={<CreatorComparePage />} />
+              <Route path="invitations" element={<InvitationsPage />} />
+              <Route path="applications" element={<ApplicationsPage />} />
+              <Route path="deliverables" element={<DeliverablesPage />} />
+              <Route path="inbox" element={<CollabInboxPage />} />
+              <Route path="performance" element={<CampaignPerformancePage />} />
+              <Route path="roi" element={<CampaignPerformancePage roi />} />
+              <Route path="billing" element={planned('brandBilling')} />
+            </Route>
           </Route>
 
           <Route element={<RequireStaff />}>

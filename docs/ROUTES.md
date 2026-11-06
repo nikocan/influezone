@@ -2,7 +2,7 @@
 
 Kaynak: `src/config/routes.ts` (uygulama içinde **Güncellemeler → Ekran durumu** sekmesinde de görünür).
 
-**Toplam 113** — ✅ 62 çalışıyor · 🟡 5 kısmi · ⏳ 46 planlandı
+**Toplam 113** — ✅ 80 çalışıyor · 🟡 9 kısmi · ⏳ 24 planlandı
 
 | # | Ekran | Rota | Kabuk | Faz | Durum |
 |---|---|---|---|---|---|
@@ -16,7 +16,7 @@ Kaynak: `src/config/routes.ts` (uygulama içinde **Güncellemeler → Ekran duru
 | 8 | Şifre sıfırlama | `/auth/reset` | auth | 1 | ✅ Çalışıyor |
 | 9 | Rol ve ilgi alanı | `/onboarding` | auth | 1 | ✅ Çalışıyor |
 | 10 | İçerik üretici onboarding | `/onboarding/creator` | auth | 1 | ✅ Çalışıyor |
-| 11 | Marka kaydı | `/onboarding/brand` | auth | 5 | ⏳ Planlandı |
+| 11 | Marka kaydı | `/onboarding/brand` | auth | 5 | ✅ Çalışıyor |
 | 12 | Şartlar, gizlilik, onaylar | `/legal/:doc` | public | 1 | ✅ Çalışıyor |
 | 13 | Sana Özel akışı | `/` | app | 2 | ✅ Çalışıyor |
 | 14 | Takip akışı | `/?feed=following` | app | 2 | ✅ Çalışıyor |
@@ -70,9 +70,9 @@ Kaynak: `src/config/routes.ts` (uygulama içinde **Güncellemeler → Ekran duru
 | 62 | Gönderi analitiği | `/studio/analytics` | studio | 4 | ✅ Çalışıyor |
 | 63 | Ürün performansı | `/studio/products` | studio | 4 | ✅ Çalışıyor |
 | 64 | Affiliate bağlantıları | `/studio/links` | studio | 4 | 🟡 Kısmi |
-| 65 | Kampanya fırsatları | `/studio/campaigns` | studio | 5 | ⏳ Planlandı |
-| 66 | Kampanya başvuruları | `/studio/campaigns/applications` | studio | 5 | ⏳ Planlandı |
-| 67 | Marka iş birlikleri | `/studio/collaborations` | studio | 5 | ⏳ Planlandı |
+| 65 | Kampanya fırsatları | `/studio/campaigns` | studio | 5 | ✅ Çalışıyor |
+| 66 | Kampanya başvuruları | `/studio/campaigns/applications` | studio | 5 | ✅ Çalışıyor |
+| 67 | Marka iş birlikleri | `/studio/collaborations` | studio | 5 | ✅ Çalışıyor |
 | 68 | Kazançlar | `/studio/earnings` | studio | 4 | ✅ Çalışıyor |
 | 69 | Komisyon işlemleri | `/studio/earnings/transactions` | studio | 4 | ✅ Çalışıyor |
 | 70 | Bekleyen / onaylı / iade kazançlar | `/studio/earnings/status` | studio | 4 | ✅ Çalışıyor |
@@ -80,25 +80,25 @@ Kaynak: `src/config/routes.ts` (uygulama içinde **Güncellemeler → Ekran duru
 | 72 | Ödeme talebi | `/studio/payouts/request` | studio | 4 | ✅ Çalışıyor |
 | 73 | Ödeme geçmişi | `/studio/payouts` | studio | 4 | ✅ Çalışıyor |
 | 74 | İçerik üretici ayarları | `/studio/settings` | studio | 2 | ✅ Çalışıyor |
-| 75 | Marka paneli | `/brand` | brand | 5 | ⏳ Planlandı |
-| 76 | Organizasyon ayarları | `/brand/settings` | brand | 5 | ⏳ Planlandı |
-| 77 | Ürün kataloğu | `/brand/catalog` | brand | 5 | ⏳ Planlandı |
-| 78 | Ürün oluştur / düzenle | `/brand/catalog/:id` | brand | 5 | ⏳ Planlandı |
-| 79 | Satıcı teklifleri | `/brand/offers` | brand | 5 | ⏳ Planlandı |
-| 80 | Komisyon kuralları | `/brand/commissions` | brand | 5 | ⏳ Planlandı |
-| 81 | Kampanyalar | `/brand/campaigns` | brand | 5 | ⏳ Planlandı |
-| 82 | Kampanya oluştur | `/brand/campaigns/new` | brand | 5 | ⏳ Planlandı |
-| 83 | Bütçe ve uygunluk | `/brand/campaigns/new/budget` | brand | 5 | ⏳ Planlandı |
-| 84 | İçerik üretici keşfi | `/brand/creators` | brand | 5 | ⏳ Planlandı |
-| 85 | İçerik üretici karşılaştırma | `/brand/creators/compare` | brand | 5 | ⏳ Planlandı |
-| 86 | Davetler | `/brand/invitations` | brand | 5 | ⏳ Planlandı |
-| 87 | Başvurular | `/brand/applications` | brand | 5 | ⏳ Planlandı |
-| 88 | Teslimatlar | `/brand/deliverables` | brand | 5 | ⏳ Planlandı |
-| 89 | İş birliği kutusu | `/brand/inbox` | brand | 5 | ⏳ Planlandı |
-| 90 | Kampanya performansı | `/brand/performance` | brand | 5 | ⏳ Planlandı |
-| 91 | Dönüşüm ve ROI raporu | `/brand/roi` | brand | 5 | ⏳ Planlandı |
+| 75 | Marka paneli | `/brand` | brand | 5 | ✅ Çalışıyor |
+| 76 | Organizasyon ayarları | `/brand/settings` | brand | 5 | ✅ Çalışıyor |
+| 77 | Ürün kataloğu | `/brand/catalog` | brand | 5 | ✅ Çalışıyor |
+| 78 | Ürün oluştur / düzenle | `/brand/catalog/:id` | brand | 5 | ✅ Çalışıyor |
+| 79 | Satıcı teklifleri | `/brand/offers` | brand | 5 | 🟡 Kısmi |
+| 80 | Komisyon kuralları | `/brand/commissions` | brand | 5 | 🟡 Kısmi |
+| 81 | Kampanyalar | `/brand/campaigns` | brand | 5 | ✅ Çalışıyor |
+| 82 | Kampanya oluştur | `/brand/campaigns/new` | brand | 5 | ✅ Çalışıyor |
+| 83 | Bütçe ve uygunluk | `/brand/campaigns/new/budget` | brand | 5 | ✅ Çalışıyor |
+| 84 | İçerik üretici keşfi | `/brand/creators` | brand | 5 | ✅ Çalışıyor |
+| 85 | İçerik üretici karşılaştırma | `/brand/creators/compare` | brand | 5 | ✅ Çalışıyor |
+| 86 | Davetler | `/brand/invitations` | brand | 5 | ✅ Çalışıyor |
+| 87 | Başvurular | `/brand/applications` | brand | 5 | ✅ Çalışıyor |
+| 88 | Teslimatlar | `/brand/deliverables` | brand | 5 | ✅ Çalışıyor |
+| 89 | İş birliği kutusu | `/brand/inbox` | brand | 5 | 🟡 Kısmi |
+| 90 | Kampanya performansı | `/brand/performance` | brand | 5 | ✅ Çalışıyor |
+| 91 | Dönüşüm ve ROI raporu | `/brand/roi` | brand | 5 | 🟡 Kısmi |
 | 92 | Faturalama | `/brand/billing` | brand | 5 | ⏳ Planlandı |
-| 93 | Ekip yetkileri | `/brand/team` | brand | 5 | ⏳ Planlandı |
+| 93 | Ekip yetkileri | `/brand/team` | brand | 5 | ✅ Çalışıyor |
 | 94 | Yönetici paneli | `/admin` | admin | 6 | ⏳ Planlandı |
 | 95 | Kullanıcılar ve roller | `/admin/users` | admin | 6 | ⏳ Planlandı |
 | 96 | İçerik üretici doğrulama | `/admin/verification/creators` | admin | 6 | ⏳ Planlandı |

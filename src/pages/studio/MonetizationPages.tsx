@@ -104,7 +104,7 @@ export function EarningsPage() {
 // ---------------------------------------------------------------------------
 type Filter = ConversionStatus | 'all';
 export function TransactionsPage({ initial = 'all' }: { initial?: Filter }) {
-  const { t, date } = useI18n();
+  const { t, date, locale } = useI18n();
   const repo = useRepo();
   const [filter, setFilter] = useState<Filter>(initial);
   const q = useQuery({ queryKey: qk.conversions(filter), queryFn: () => repo.listConversions(filter) });
@@ -136,7 +136,7 @@ export function TransactionsPage({ initial = 'all' }: { initial?: Filter }) {
                     <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
                       <div><dt className="text-muted">{t('earnings.order')}</dt><dd><CurrencyDisplay amount={c.orderAmount} currency={c.currency} /></dd></div>
                       <div><dt className="text-muted">{t('earnings.commission')}</dt><dd><CurrencyDisplay amount={c.commissionAmount} currency={c.currency} /></dd></div>
-                      <div><dt className="text-muted">{t('earnings.share')}</dt><dd>{c.creatorShareBps !== null ? `%${c.creatorShareBps / 100}` : '—'}</dd></div>
+                      <div><dt className="text-muted">{t('earnings.share')}</dt><dd>{c.creatorShareBps !== null ? (locale === 'tr' ? `%${c.creatorShareBps / 100}` : `${c.creatorShareBps / 100}%`) : '—'}</dd></div>
                       <div><dt className="text-muted">{t('earnings.yourShare')}</dt><dd className="font-semibold">{c.status === 'rejected' ? '—' : c.creatorAmount !== null ? <CurrencyDisplay amount={c.creatorAmount} currency={c.currency} /> : t('earnings.notYet')}</dd></div>
                     </dl>
                     {c.reversedAmount > 0 && <p className="mt-1 text-xs text-danger">{t('earnings.reversedNote')}: <CurrencyDisplay amount={c.reversedAmount} currency={c.currency} /></p>}

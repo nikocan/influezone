@@ -13,7 +13,8 @@ import type {
   Product,
   Profile,
 } from '../types';
-import type { AffiliateLink, PayoutAccount, Payout, ConversionStatus } from '../types';
+import type { AffiliateLink, PayoutAccount, Payout, ConversionStatus, Organization, OrgRole, Campaign, CampaignApplication, CampaignInvitation, CampaignParticipant, CampaignDeliverable } from '../types';
+import { seedOrganizations, seedCampaigns } from './seedBrands';
 import type { LedgerEntry, RuleLike } from '@/lib/ledger';
 import { seedComments, seedMarketplaces, seedOffers, seedPosts, seedProducts, seedProfiles, SAMPLE_FOLLOWS } from './seed';
 
@@ -84,6 +85,24 @@ export interface DemoDB {
   rules: RuleLike[];
   payoutAccounts: PayoutAccount[];
   payouts: Payout[];
+  // Phase 5
+  organizations: Organization[];
+  orgMembers: { orgId: string; userId: string; role: OrgRole }[];
+  campaigns: Campaign[];
+  applications: CampaignApplication[];
+  invitations: CampaignInvitation[];
+  participants: CampaignParticipant[];
+  deliverables: CampaignDeliverable[];
+}
+
+function addPhase5(d: Partial<DemoDB>) {
+  d.organizations ??= seedOrganizations();
+  d.orgMembers ??= [];
+  d.campaigns ??= seedCampaigns(Date.now());
+  d.applications ??= [];
+  d.invitations ??= [];
+  d.participants ??= [];
+  d.deliverables ??= [];
 }
 
 const DEFAULT_RULES: RuleLike[] = [{ id: 'rule_default', creatorShareBps: 7000, holdDays: 30, validFrom: '2020-01-01T00:00:00.000Z' }];
@@ -98,7 +117,7 @@ function addPhase4(d: Partial<DemoDB>) {
 }
 
 const KEY = 'sf.demo.db';
-const VERSION = 4;
+const VERSION = 5;
 
 function fresh(): DemoDB {
   const now = Date.now();
@@ -128,6 +147,13 @@ function fresh(): DemoDB {
     rules: DEFAULT_RULES,
     payoutAccounts: [],
     payouts: [],
+    organizations: seedOrganizations(),
+    orgMembers: [],
+    campaigns: seedCampaigns(now),
+    applications: [],
+    invitations: [],
+    participants: [],
+    deliverables: [],
   };
 }
 
@@ -148,11 +174,9 @@ export function getDB(): DemoDB {
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as DemoDB;
-      if (parsed.version === 3) {
-        // forward migration: keep the user's demo accounts and posts
-        addPhase4(parsed);
-        parsed.version = VERSION;
-      }
+      // forward migrations keep the user's demo accounts, posts and earnings
+      if (parsed.version === 3) { addPhase4(parsed); parsed.version = 4; }
+      if (parsed.version === 4) { addPhase5(parsed); parsed.version = 5; }
       if (parsed.version === VERSION) {
         parsed.offers = seedOffers(Date.now());
         parsed.marketplaces = seedMarketplaces();

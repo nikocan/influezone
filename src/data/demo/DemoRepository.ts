@@ -25,7 +25,8 @@ import { extractHashtags, extractMentions, uid } from '@/lib/utils';
 import { rankFeed } from '@/lib/ranking';
 import { AppError } from '../errors';
 import * as M from './monetization';
-import type { AffiliateLink, ConversionStatus } from '../types';
+import * as B from './brand';
+import type { AffiliateLink, ConversionStatus, CampaignInput, CampaignStatus, CreatorDiscoveryFilters, NewProductInput, OrgRole } from '../types';
 
 const nowIso = () => new Date().toISOString();
 const latency = <T>(v: T, ms = 120): Promise<T> => new Promise((r) => setTimeout(() => r(structuredClone(v)), ms));
@@ -752,6 +753,186 @@ export class DemoRepository implements Repository {
       return out;
     });
     return this.delay(res);
+  }
+
+  // ---------- Brand portal ----------
+  async listMyOrganizations() {
+    const me = this.me();
+    const d = getDB();
+    return this.delay(d.orgMembers.filter((m) => m.userId === me).map((m) => ({ organization: d.organizations.find((o) => o.id === m.orgId)!, role: m.role })));
+  }
+  async registerBrand(input: { name: string; slug: string; country: string; website: string | null; username: string }) {
+    const me = this.me();
+    return this.delay(mutate((d) => B.registerBrand(d, me, input)));
+  }
+  async updateOrganization(orgId: string, patch: { name?: string; website?: string | null; country?: string }) {
+    const me = this.me();
+    return this.delay(mutate((d) => {
+      B.requireRole(d, orgId, me, 'admin');
+      if (patch.website && !/^https:\/\//.test(patch.website)) throw new AppError('invalid_url');
+      const o = d.organizations.find((x) => x.id === orgId)!;
+      Object.assign(o, patch);
+      const prof = d.profiles.find((p) => p.id === o.brandProfileId);
+      if (prof && patch.name) prof.displayName = patch.name;
+      return o;
+    }));
+  }
+  async listOrgMembers(orgId: string) {
+    const me = this.me();
+    const d = getDB();
+    B.requireRole(d, orgId, me, 'member');
+    return this.delay(d.orgMembers.filter((m) => m.orgId === orgId).map((m) => ({ userId: m.userId, profileId: m.userId, role: m.role })));
+  }
+  async addOrgMember(orgId: string, username: string, role: Exclude<OrgRole, 'owner'>) {
+    const me = this.me();
+    mutate((d) => {
+      B.requireRole(d, orgId, me, 'admin');
+      const p = d.profiles.find((x) => x.username === username && x.kind === 'person');
+      if (!p) throw new AppError('not_found');
+      const existing = d.orgMembers.find((m) => m.orgId === orgId && m.userId === p.id);
+      if (existing?.role === 'owner') throw new AppError('forbidden');
+      if (existing) existing.role = role;
+      else d.orgMembers.push({ orgId, userId: p.id, role });
+    });
+    return this.delay(undefined);
+  }
+  async removeOrgMember(orgId: string, userId: string) {
+    const me = this.me();
+    mutate((d) => {
+      const target = d.orgMembers.find((m) => m.orgId === orgId && m.userId === userId);
+      if (!target) return;
+      if (target.role === 'owner') throw new AppError('forbidden');
+      if (userId !== me) B.requireRole(d, orgId, me, 'admin');
+      d.orgMembers = d.orgMembers.filter((m) => m !== target);
+    });
+    return this.delay(undefined);
+  }
+  async listOrgProducts(orgId: string) {
+    const me = this.me();
+    const d = getDB();
+    B.requireRole(d, orgId, me, 'member');
+    return this.delay(B.orgProducts(d, orgId));
+  }
+  async createOrgProduct(orgId: string, input: NewProductInput) {
+    const me = this.me();
+    return this.delay(mutate((d) => B.createProduct(d, me, orgId, input)));
+  }
+  async listCampaigns(orgId: string) {
+    const me = this.me();
+    const d = getDB();
+    B.requireRole(d, orgId, me, 'member');
+    return this.delay(d.campaigns.filter((c) => c.organizationId === orgId).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  }
+  async getCampaign(id: string) {
+    const v = this.viewer();
+    const d = getDB();
+    const c = d.campaigns.find((x) => x.id === id);
+    if (!c) return this.delay(null);
+    const visible = c.status === 'open' || c.status === 'in_progress' || (v && (B.roleOf(d, c.organizationId, v) || B.isStaff(d, v) || d.participants.some((p) => p.campaignId === id && p.creatorId === v)));
+    return this.delay(visible ? c : null);
+  }
+  async saveCampaign(orgId: string, input: CampaignInput, id?: string) {
+    const me = this.me();
+    return this.delay(mutate((d) => B.saveCampaign(d, me, orgId, input, id)));
+  }
+  async setCampaignStatus(id: string, status: CampaignStatus, note?: string) {
+    const me = this.me();
+    return this.delay(mutate((d) => B.setStatus(d, me, id, status, note)));
+  }
+  async discoverCreators(filters: CreatorDiscoveryFilters) {
+    const me = this.me();
+    const d = getDB();
+    const blocked = new Set(d.blocks.filter((b) => b.blockerId === me || b.blockedId === me).map((b) => (b.blockerId === me ? b.blockedId : b.blockerId)));
+    return this.delay(B.discover(d, filters, blocked));
+  }
+  async inviteCreator(campaignId: string, creatorId: string, message: string) {
+    const me = this.me();
+    return this.delay(mutate((d) => B.invite(d, me, campaignId, creatorId, message)));
+  }
+  private orgCampaignIds(orgId: string) {
+    const me = this.me();
+    const d = getDB();
+    B.requireRole(d, orgId, me, 'analyst');
+    return new Set(d.campaigns.filter((c) => c.organizationId === orgId).map((c) => c.id));
+  }
+  async listOrgInvitations(orgId: string) {
+    const ids = this.orgCampaignIds(orgId);
+    return this.delay(getDB().invitations.filter((i) => ids.has(i.campaignId)));
+  }
+  async listOrgApplications(orgId: string) {
+    const ids = this.orgCampaignIds(orgId);
+    return this.delay(getDB().applications.filter((a) => ids.has(a.campaignId) && a.status !== 'withdrawn').sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  }
+  async reviewApplication(id: string, accept: boolean) {
+    const me = this.me();
+    mutate((d) => B.reviewApplication(d, me, id, accept));
+    return this.delay(undefined);
+  }
+  async listCampaignParticipants(campaignId: string) {
+    const me = this.me();
+    const d = getDB();
+    const c = d.campaigns.find((x) => x.id === campaignId);
+    if (!c) throw new AppError('not_found');
+    if (!B.roleOf(d, c.organizationId, me)) throw new AppError('forbidden');
+    return this.delay(d.participants.filter((p) => p.campaignId === campaignId));
+  }
+  async listOrgDeliverables(orgId: string) {
+    const ids = this.orgCampaignIds(orgId);
+    return this.delay(getDB().deliverables.filter((x) => ids.has(x.campaignId)).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)));
+  }
+  async reviewDeliverable(id: string, approve: boolean, feedback: string) {
+    const me = this.me();
+    mutate((d) => B.reviewDeliverable(d, me, id, approve, feedback));
+    return this.delay(undefined);
+  }
+  async getCampaignPerformance(campaignId: string) {
+    const me = this.me();
+    const d = getDB();
+    const c = d.campaigns.find((x) => x.id === campaignId);
+    if (!c) throw new AppError('not_found');
+    B.requireRole(d, c.organizationId, me, 'analyst');
+    return this.delay(B.performance(d, campaignId));
+  }
+  async listOpenCampaigns() {
+    return this.delay(getDB().campaigns.filter((c) => c.status === 'open').sort((a, b) => (a.applicationDeadline ?? '').localeCompare(b.applicationDeadline ?? '')));
+  }
+  async applyToCampaign(campaignId: string, pitch: string, proposedFee: number | null) {
+    const me = this.me();
+    return this.delay(mutate((d) => B.apply(d, me, campaignId, pitch, proposedFee)));
+  }
+  async withdrawApplication(id: string) {
+    const me = this.me();
+    mutate((d) => {
+      const a = d.applications.find((x) => x.id === id && x.creatorId === me && x.status === 'pending');
+      if (!a) throw new AppError('forbidden');
+      a.status = 'withdrawn';
+    });
+    return this.delay(undefined);
+  }
+  async listMyApplications() {
+    const me = this.me();
+    return this.delay(getDB().applications.filter((a) => a.creatorId === me));
+  }
+  async listMyInvitations() {
+    const me = this.me();
+    return this.delay(getDB().invitations.filter((i) => i.creatorId === me));
+  }
+  async respondInvitation(id: string, accept: boolean) {
+    const me = this.me();
+    mutate((d) => B.respondInvitation(d, me, id, accept));
+    return this.delay(undefined);
+  }
+  async listMyParticipations() {
+    const me = this.me();
+    return this.delay(getDB().participants.filter((p) => p.creatorId === me));
+  }
+  async listMyDeliverables() {
+    const me = this.me();
+    return this.delay(getDB().deliverables.filter((x) => x.creatorId === me));
+  }
+  async submitDeliverable(campaignId: string, postId: string, note: string) {
+    const me = this.me();
+    return this.delay(mutate((d) => B.submitDeliverable(d, me, campaignId, postId, note)));
   }
 
   // ---------- Safety ----------

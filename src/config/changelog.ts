@@ -12,6 +12,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.4.0',
+    date: '2026-11-06',
+    title: { tr: 'Faz 5: Marka Portalı ve kampanyalar', en: 'Phase 5: Brand portal & campaigns' },
+    items: [
+      { area: 'brand', tr: 'Marka kaydı: organizasyon + herkese açık marka profili; doğrulama yalnızca platform ekibi tarafından', en: 'Brand registration: organisation + public brand profile; verification by the platform team only' },
+      { area: 'brand', tr: 'Ekip yetkileri: Sahip / Yönetici / Kampanya yöneticisi / Analist / Üye; kullanıcı adıyla ekip üyesi ekleme', en: 'Team permissions: Owner / Admin / Campaign manager / Analyst / Member; add members by username' },
+      { area: 'brand', tr: 'Ürün kataloğu: yeni ürünler moderasyon onayına gider; teklifler yalnızca satıcı akışından (elle fiyat yok)', en: 'Product catalog: new products go to moderation; offers come only from seller feeds (no manual prices)' },
+      { area: 'brand', tr: 'Kampanya oluşturucu: sabit ücret / affiliate / hibrit, bütçe, hedef ülke ve kategori, minimum takipçi, teslimatlar, zorunlu reklam beyanı, ürünler, tarihler', en: 'Campaign builder: fixed fee / affiliate / hybrid, budget, countries & categories, minimum followers, deliverables, required disclosure, products, dates' },
+      { area: 'brand', tr: 'Kampanya durumları: Taslak → Onay bekliyor → Başvuruya açık → Devam ediyor → Tamamlandı (+ Duraklatıldı, İptal). Marka kendi kampanyasını yayına alamaz; ticari şartlar gönderimden sonra kilitlenir', en: 'Campaign statuses: Draft → Pending approval → Open → In progress → Completed (+ Paused, Cancelled). Brands cannot self-approve; commercial terms lock after submission' },
+      { area: 'brand', tr: 'İçerik üretici keşfi (filtreler, gerçek etkileşim oranı, beyanlı içerik oranı), en fazla 3 kişiyi karşılaştırma, davet gönderme', en: 'Creator discovery (filters, real engagement rate, disclosed-content share), compare up to 3, send invitations' },
+      { area: 'brand', tr: 'Başvurular, davetler, teslimat onayı / değişiklik isteme, iş birliği kutusu, kampanya performansı ve etkileşim başı maliyet', en: 'Applications, invitations, deliverable approval / change requests, collaboration inbox, campaign performance and cost per engagement' },
+      { area: 'creator', tr: 'Studio: kampanya fırsatları (uygunluk nedenleriyle), başvurular ve davetler, iş birlikleri ve teslimat gönderme', en: 'Studio: campaign opportunities (with eligibility reasons), applications & invitations, collaborations and deliverable submission' },
+      { area: 'security', tr: 'Teslim edilen gönderi kampanyanın zorunlu beyanını taşımıyorsa kabul edilmez; marka ekibi kendi kampanyasına katılamaz (çıkar çatışması)', en: 'Deliverables without the required disclosure are rejected; brand team members cannot join their own campaigns (conflict of interest)' },
+      { area: 'quality', tr: '22 yeni veritabanı testi (toplam 98), 8 yeni birim testi (toplam 70), uçtan uca senaryo 28 adım', en: '22 new database tests (98 total), 8 new unit tests (70 total), end-to-end scenario 28 steps' },
+    ],
+    pending: [
+      { tr: 'Marka faturalama ve kampanya ödemelerinin tahsilatı (ödeme sağlayıcı entegrasyonu)', en: 'Brand billing and campaign payment collection (payment provider integration)' },
+      { tr: 'Marka adına (marka profiliyle) gönderi ve mesaj; şimdilik iş birliği mesajları kişisel hesaptan', en: 'Posting and messaging as the brand profile; collaboration messages currently come from the personal account' },
+      { tr: 'Gelir bazlı ROI için satıcı sipariş verisi', en: 'Merchant order data for revenue-based ROI' },
+      { tr: 'Yönetim konsolu: marka doğrulama, kampanya onay kuyruğu, ürün moderasyonu (Faz 6)', en: 'Admin console: brand verification, campaign approval queue, product moderation (Phase 6)' },
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-11-05',
     title: { tr: 'Faz 4: İçerik üretici gelirleri (ödeme gönderimi kapalı)', en: 'Phase 4: Creator monetisation (payout sending disabled)' },
